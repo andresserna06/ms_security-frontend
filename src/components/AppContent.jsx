@@ -37,12 +37,13 @@ import { routes } from '../routes'
  *
  * @returns {React.ReactElement} Content container with routed views
  */
-const AppContent = () => {
+const AppContent = ({ roleService, permissionService }) => {
   return (
     <CContainer className="px-4" lg>
       <Suspense fallback={<CSpinner color="primary" />}>
         <Routes>
           {routes.map((route, idx) => {
+            const RouteElement = route.element
             return (
               route.element && (
                 <Route
@@ -50,7 +51,7 @@ const AppContent = () => {
                   path={route.path}
                   exact={route.exact}
                   name={route.name}
-                  element={<route.element />}
+                  element={<RouteElement roleService={roleService} permissionService={permissionService} />}
                 />
               )
             )

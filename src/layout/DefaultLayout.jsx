@@ -35,14 +35,14 @@ import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/inde
  *
  * @returns {React.ReactElement} Complete application layout
  */
-const DefaultLayout = () => {
+const DefaultLayout = ({ roleService, permissionService }) => {
   return (
     <div>
       <AppSidebar />
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppHeader />
         <div className="body flex-grow-1">
-          <AppContent />
+          <AppContent roleService={roleService} permissionService={permissionService} />
         </div>
         <AppFooter />
       </div>
