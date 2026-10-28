@@ -13,6 +13,9 @@ import { serviceContainer } from './services/serviceContainer'
 
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <App roleService={serviceContainer.roleService} permissionService={serviceContainer.permissionService} />
+    <App
+      roleService={serviceContainer.roleService}
+      permissionService={serviceContainer.permissionService}
+    />
   </Provider>,
 )

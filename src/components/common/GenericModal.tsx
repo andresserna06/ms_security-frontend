@@ -6,7 +6,6 @@ import {
   CModalBody,
   CModalFooter,
 } from "@coreui/react";
-import GenericButton from "./GenericButton";
 
 interface GenericModalProps {
   visible: boolean;
@@ -15,6 +14,7 @@ interface GenericModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "lg" | "xl";
+  backdrop?: boolean | "static";
 }
 
 export default function GenericModal({
@@ -24,9 +24,16 @@ export default function GenericModal({
   children,
   footer,
   size = "lg",
+  backdrop,
 }: GenericModalProps) {
   return (
-    <CModal visible={visible} onClose={onClose} size={size} alignment="center">
+    <CModal
+      visible={visible}
+      onClose={onClose}
+      size={size}
+      alignment="center"
+      backdrop={backdrop}
+    >
       <CModalHeader>
         <CModalTitle>{title}</CModalTitle>
       </CModalHeader>

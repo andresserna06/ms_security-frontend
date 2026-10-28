@@ -51,7 +51,9 @@ const AppContent = ({ roleService, permissionService }) => {
                   path={route.path}
                   exact={route.exact}
                   name={route.name}
-                  element={<RouteElement roleService={roleService} permissionService={permissionService} />}
+                  element={
+                    <RouteElement roleService={roleService} permissionService={permissionService} />
+                  }
                 />
               )
             )

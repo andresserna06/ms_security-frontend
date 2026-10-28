@@ -129,7 +129,9 @@ const App = ({ roleService, permissionService }) => {
           <Route
             path="*"
             name="Home"
-            element={<DefaultLayout roleService={roleService} permissionService={permissionService} />}
+            element={
+              <DefaultLayout roleService={roleService} permissionService={permissionService} />
+            }
           />
         </Routes>
       </Suspense>
