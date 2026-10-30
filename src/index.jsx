@@ -16,6 +16,8 @@ createRoot(document.getElementById('root')).render(
     <App
       roleService={serviceContainer.roleService}
       permissionService={serviceContainer.permissionService}
+      userService={serviceContainer.userService}
+      profileService={serviceContainer.profileService}
     />
   </Provider>,
 )
