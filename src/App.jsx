@@ -65,7 +65,7 @@ const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
  * import App from './App'
  * ReactDOM.render(<App />, document.getElementById('root'))
  */
-const App = ({ roleService, permissionService, userService, profileService }) => {
+const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
 
@@ -93,6 +93,7 @@ const App = ({ roleService, permissionService, userService, profileService }) =>
         }
       >
         <Routes>
+          <Route exact path="/login" name="Login Page" element={<Login />} />
           <Route exact path="/authentication/login" name="Login Page" element={<Login />} />
           <Route
             exact
@@ -126,18 +127,7 @@ const App = ({ roleService, permissionService, userService, profileService }) =>
           />
           <Route exact path="/error-pages/404" name="Page 404" element={<Page404 />} />
           <Route exact path="/error-pages/500" name="Page 500" element={<Page500 />} />
-          <Route
-            path="*"
-            name="Home"
-            element={
-              <DefaultLayout
-                roleService={roleService}
-                permissionService={permissionService}
-                userService={userService}
-                profileService={profileService}
-              />
-            }
-          />
+          <Route path="*" name="Home" element={<DefaultLayout />} />
         </Routes>
       </Suspense>
     </HashRouter>

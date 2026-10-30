@@ -10,6 +10,20 @@ const parseResponse = async (response) => {
   const data = isJson ? await response.json() : await response.text()
 
   if (!response.ok) {
+    // Si el backend responde 401 en una ruta protegida (fuera de /auth/*),
+    // limpiamos la sesión local y redirigimos a la vista de login
+    const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
+    if (response.status === 401 && !isAuthEndpoint) {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('tokenType')
+      localStorage.removeItem('tokenExpiresAt')
+      localStorage.removeItem('userEmail')
+      if (!window.location.hash.includes('/login')) {
+        window.location.hash = '#/login'
+      }
+    }
+
     let errorMessage = 'Error al procesar la solicitud en el servidor'
     let fieldErrors = null
 
@@ -34,12 +48,18 @@ const parseResponse = async (response) => {
   return data
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export const apiClient = {
   get: async (endpoint) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     })
     return parseResponse(response)
@@ -51,6 +71,7 @@ export const apiClient = {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(body),
     })
@@ -63,6 +84,7 @@ export const apiClient = {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(body),
     })
@@ -74,6 +96,7 @@ export const apiClient = {
       method: 'PATCH',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     }
     if (body !== null) {
@@ -89,6 +112,7 @@ export const apiClient = {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     })
     return parseResponse(response)
