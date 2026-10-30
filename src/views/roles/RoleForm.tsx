@@ -5,6 +5,7 @@ import GenericButton from "../../components/common/GenericButton";
 
 interface RoleFormProps {
   initialRole?: Role | null;
+  existingRoles?: Role[];
   onSubmit: (role: Role) => Promise<void> | void;
   onCancel: () => void;
   isSaving?: boolean;
@@ -15,7 +16,13 @@ interface FormErrors {
   description?: string;
 }
 
-export default function RoleForm({ initialRole = null, onSubmit, onCancel, isSaving = false }: RoleFormProps) {
+export default function RoleForm({
+  initialRole = null,
+  existingRoles = [],
+  onSubmit,
+  onCancel,
+  isSaving = false,
+}: RoleFormProps) {
   const [role, setRole] = useState<Role>(new Role({ name: "", description: "" }));
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -35,12 +42,30 @@ export default function RoleForm({ initialRole = null, onSubmit, onCancel, isSav
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!role.name || role.name.trim() === "") {
+    const normalizedName = (role.name ?? "").trim();
+    const normalizedDescription = (role.description ?? "").trim();
+
+    if (normalizedName === "") {
       newErrors.name = "El nombre del rol es obligatorio.";
+    } else if (normalizedName.length > 50) {
+      newErrors.name = "El nombre del rol no puede superar los 50 caracteres.";
+    } else {
+      const duplicated = existingRoles.some(
+        (existingRole) =>
+          existingRole.id !== role.id &&
+          (existingRole.name ?? "").trim().toLowerCase() === normalizedName.toLowerCase(),
+      );
+      if (duplicated) {
+        newErrors.name = "Ya existe un rol con ese nombre.";
+      }
     }
-    if (!role.description || role.description.trim() === "") {
+
+    if (normalizedDescription === "") {
       newErrors.description = "La descripción del rol es obligatoria.";
+    } else if (normalizedDescription.length > 255) {
+      newErrors.description = "La descripción no puede superar los 255 caracteres.";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,7 +73,13 @@ export default function RoleForm({ initialRole = null, onSubmit, onCancel, isSav
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(role);
+    await onSubmit(
+      new Role({
+        ...role,
+        name: (role.name ?? "").trim(),
+        description: (role.description ?? "").trim(),
+      }),
+    );
   };
 
   return (

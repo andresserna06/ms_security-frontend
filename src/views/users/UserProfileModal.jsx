@@ -207,12 +207,7 @@ const UserProfileModal = ({ visible, user, onClose, onSaved }) => {
             )}
           </div>
           <div className="d-flex gap-2">
-            <CButton
-              color="secondary"
-              variant="outline"
-              onClick={onClose}
-              disabled={submitting}
-            >
+            <CButton color="secondary" variant="outline" onClick={onClose} disabled={submitting}>
               Cancelar
             </CButton>
             <CButton color="primary" type="submit" disabled={submitting || loading}>

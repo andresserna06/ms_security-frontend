@@ -27,6 +27,7 @@ import {
 const UserDetailCard = ({
   userDetail,
   userRoles,
+  userPermissions,
   loadingDetail,
   onEditUser,
   onManageProfile,
@@ -53,8 +54,8 @@ const UserDetailCard = ({
         <CCardBody className="text-center py-5 text-body-secondary">
           <CIcon icon={cilUser} size="xl" className="mb-2 opacity-50" />
           <p className="mb-0">
-            Selecciona un usuario de la tabla para consultar su información detallada y gestionar
-            su perfil, roles y estado.
+            Selecciona un usuario de la tabla para consultar su información detallada y gestionar su
+            perfil, roles y estado.
           </p>
         </CCardBody>
       </CCard>
@@ -64,6 +65,7 @@ const UserDetailCard = ({
   const isActive = userDetail.active !== false
   const profile = userDetail.profile
   const roles = userRoles || []
+  const permissions = userPermissions || []
 
   return (
     <CCard className="h-100 shadow-sm">
@@ -139,7 +141,6 @@ const UserDetailCard = ({
             </div>
           )}
         </div>
-
         <CRow className="g-2 mb-3">
           <CCol xs={12}>
             <CButton

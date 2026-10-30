@@ -19,8 +19,9 @@ import {
   CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus, cilReload, cilSearch } from '@coreui/icons'
+import { cilPlus, cilReload, cilSearch, cilX } from '@coreui/icons'
 import { userService } from '../../services/userService'
+import { serviceContainer } from '../../services/serviceContainer'
 import UsersTable from './UsersTable'
 import UserDetailCard from './UserDetailCard'
 import UserFormModal from './UserFormModal'
@@ -33,9 +34,17 @@ const UsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
 
+  // Filtro por rol
+  const [roles, setRoles] = useState([])
+  const [roleFilter, setRoleFilter] = useState('ALL')
+  const [roleUserIds, setRoleUserIds] = useState(null) // null = sin filtro por rol
+  const [loadingRoleFilter, setLoadingRoleFilter] = useState(false)
+  const [roleFilterVersion, setRoleFilterVersion] = useState(0)
+
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [selectedUserDetail, setSelectedUserDetail] = useState(null)
   const [selectedUserRoles, setSelectedUserRoles] = useState([])
+  const [selectedUserPermissions, setSelectedUserPermissions] = useState([])
   const [loadingDetail, setLoadingDetail] = useState(false)
 
   const [feedback, setFeedback] = useState({ type: '', message: '' })
@@ -84,6 +93,7 @@ const UsersPage = () => {
     if (!userId) {
       setSelectedUserDetail(null)
       setSelectedUserRoles([])
+      setSelectedUserPermissions([])
       return
     }
 
@@ -93,8 +103,26 @@ const UsersPage = () => {
         userService.getDetailWithProfile(userId),
         userService.getDetailWithRoles(userId),
       ])
+      const roleAssignments = detailWithRoles?.roles || []
+
+      const roleIds = roleAssignments
+        .map((assignment) => assignment.role?.id)
+        .filter((roleId) => typeof roleId === 'number')
+
+      const permissionLists = await Promise.all(
+        roleIds.map((roleId) => serviceContainer.permissionService.getByRole(roleId)),
+      )
+
+      const permissionsById = new Map()
+      permissionLists.forEach((permissions) => {
+        if (Array.isArray(permissions)) {
+          permissions.forEach((permission) => permissionsById.set(permission.id, permission))
+        }
+      })
+
       setSelectedUserDetail(detailWithProfile)
-      setSelectedUserRoles(detailWithRoles?.roles || [])
+      setSelectedUserRoles(roleAssignments)
+      setSelectedUserPermissions(Array.from(permissionsById.values()))
     } catch (error) {
       showNotification('danger', error.message || 'Error al cargar el detalle del usuario')
     } finally {
@@ -103,14 +131,66 @@ const UsersPage = () => {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers(true)
   }, [fetchUsers])
 
   useEffect(() => {
     if (selectedUserId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchUserDetail(selectedUserId)
     }
   }, [selectedUserId, fetchUserDetail])
+
+  // Carga el catálogo de roles para el filtro
+  useEffect(() => {
+    let cancelled = false
+
+    const loadRoles = async () => {
+      const result = await serviceContainer.roleService.getAll()
+      if (cancelled) return
+      setRoles(Array.isArray(result) ? result : [])
+    }
+
+    loadRoles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Cuando se elige un rol, trae los ids de los usuarios que lo tienen
+  useEffect(() => {
+    if (roleFilter === 'ALL') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRoleUserIds(null)
+      return
+    }
+
+    let cancelled = false
+
+    const loadRoleUsers = async () => {
+      setLoadingRoleFilter(true)
+      const assignments = await serviceContainer.userRoleService.getByRole(Number(roleFilter))
+      if (cancelled) return
+
+      if (assignments === null) {
+        setRoleUserIds(new Set())
+        showNotification('danger', 'No fue posible consultar los usuarios de este rol.')
+      } else {
+        setRoleUserIds(
+          new Set(assignments.map((assignment) => assignment.user?.id ?? assignment.userId)),
+        )
+      }
+      setLoadingRoleFilter(false)
+    }
+
+    loadRoleUsers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [roleFilter, roleFilterVersion])
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -124,9 +204,20 @@ const UsersPage = () => {
         (statusFilter === 'ACTIVE' && isActive) ||
         (statusFilter === 'INACTIVE' && !isActive)
 
-      return matchesSearch && matchesStatus
+      const matchesRole = roleUserIds === null || roleUserIds.has(user.id)
+
+      return matchesSearch && matchesStatus && matchesRole
     })
-  }, [users, searchTerm, statusFilter])
+  }, [users, searchTerm, statusFilter, roleUserIds])
+
+  const hasActiveFilters =
+    searchTerm.trim() !== '' || roleFilter !== 'ALL' || statusFilter !== 'ALL'
+
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setRoleFilter('ALL')
+    setStatusFilter('ALL')
+  }
 
   const handleOpenCreateModal = () => {
     setUserToEdit(null)
@@ -207,6 +298,7 @@ const UsersPage = () => {
         if (!nextId) {
           setSelectedUserDetail(null)
           setSelectedUserRoles([])
+          setSelectedUserPermissions([])
         }
       }
     } catch (error) {
@@ -257,7 +349,7 @@ const UsersPage = () => {
       <CCard className="mb-4 shadow-sm">
         <CCardBody>
           <CRow className="g-3 align-items-center">
-            <CCol md={7}>
+            <CCol xs={12} md={4}>
               <CInputGroup>
                 <CInputGroupText>
                   <CIcon icon={cilSearch} />
@@ -269,7 +361,22 @@ const UsersPage = () => {
                 />
               </CInputGroup>
             </CCol>
-            <CCol md={3}>
+            <CCol xs={6} md={2}>
+              <CFormSelect
+                value={roleFilter}
+                onChange={(event) => setRoleFilter(event.target.value)}
+                disabled={loadingRoleFilter}
+                aria-label="Filtrar por rol"
+              >
+                <option value="ALL">Todos los roles</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </CFormSelect>
+            </CCol>
+            <CCol xs={6} md={2}>
               <CFormSelect
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
@@ -280,7 +387,20 @@ const UsersPage = () => {
                 <option value="INACTIVE">Solo inactivos</option>
               </CFormSelect>
             </CCol>
-            <CCol md={2} className="text-md-end text-body-secondary small">
+            <CCol xs={6} md={2}>
+              <CButton
+                color="secondary"
+                variant="outline"
+                className="w-100"
+                onClick={handleClearFilters}
+                disabled={!hasActiveFilters}
+                title="Limpiar filtros"
+              >
+                <CIcon icon={cilX} className="me-1" />
+                Limpiar
+              </CButton>
+            </CCol>
+            <CCol xs={6} md={2} className="text-md-end text-body-secondary small">
               Total: <strong>{filteredUsers.length}</strong> usuario(s)
             </CCol>
           </CRow>
@@ -294,7 +414,7 @@ const UsersPage = () => {
             <CCardBody className="p-0">
               <UsersTable
                 users={filteredUsers}
-                loading={loading}
+                loading={loading || loadingRoleFilter}
                 selectedUserId={selectedUserId}
                 onSelectUser={(user) => setSelectedUserId(user.id)}
               />
@@ -306,6 +426,7 @@ const UsersPage = () => {
           <UserDetailCard
             userDetail={selectedUserDetail}
             userRoles={selectedUserRoles}
+            userPermissions={selectedUserPermissions}
             loadingDetail={loadingDetail}
             onEditUser={handleOpenEditModal}
             onManageProfile={(user) => setProfileModalUser(user)}
@@ -347,6 +468,8 @@ const UsersPage = () => {
           if (selectedUserId) {
             fetchUserDetail(selectedUserId)
           }
+          // Si hay un rol filtrado, se vuelve a consultar para que la lista quede al día
+          setRoleFilterVersion((version) => version + 1)
         }}
       />
 
@@ -379,7 +502,12 @@ const UsersPage = () => {
           >
             Cancelar
           </CButton>
-          <CButton color="danger" className="text-white" onClick={handleConfirmDelete} disabled={deleting}>
+          <CButton
+            color="danger"
+            className="text-white"
+            onClick={handleConfirmDelete}
+            disabled={deleting}
+          >
             {deleting ? (
               <>
                 <CSpinner size="sm" className="me-2" />
