@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { CCard, CCardBody, CCardHeader, CFormCheck } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilChevronBottom, cilChevronRight } from "@coreui/icons";
@@ -7,7 +7,16 @@ import { ActionKey, MatrixGroups } from "../../utils/permissionMatrix";
 interface PermissionMatrixProps {
   groups: MatrixGroups;
   selectedPermissionIds: Set<number>;
-  onToggle: (permissionId: number) => void;
+  onToggleCell: (permissionIds: number[]) => void;
+}
+
+interface MatrixCheckboxProps {
+  checked: boolean;
+  indeterminate: boolean;
+  title: string;
+  ariaLabel: string;
+  disabled?: boolean;
+  onChange: () => void;
 }
 
 const ACTIONS: { key: ActionKey; label: string }[] = [
@@ -18,10 +27,41 @@ const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: "eliminar", label: "Eliminar" },
 ];
 
+const NO_EXISTING_PERMISSION_TITLE = "Este permiso no existe en el sistema";
+
+function MatrixCheckbox({
+  checked,
+  indeterminate,
+  title,
+  ariaLabel,
+  disabled = false,
+  onChange,
+}: MatrixCheckboxProps) {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = indeterminate;
+    }
+  }, [indeterminate]);
+
+  return (
+    <CFormCheck
+      ref={checkboxRef}
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={onChange}
+      title={title}
+      aria-label={ariaLabel}
+    />
+  );
+}
+
 export default function PermissionMatrix({
   groups,
   selectedPermissionIds,
-  onToggle,
+  onToggleCell,
 }: PermissionMatrixProps) {
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
 
@@ -49,7 +89,12 @@ export default function PermissionMatrix({
               <tr>
                 <th style={{ minWidth: "220px" }}>Recurso</th>
                 {ACTIONS.map((action) => (
-                  <th key={action.key} className="text-center" style={{ width: "120px" }}>
+                  <th
+                    key={action.key}
+                    className="text-center"
+                    style={{ width: "120px" }}
+                    translate="no"
+                  >
                     {action.label}
                   </th>
                 ))}
@@ -74,19 +119,44 @@ export default function PermissionMatrix({
                       rows.map((row) => (
                         <tr key={`${moduleName}-${row.model}`}>
                           <td>{row.resource}</td>
-                          {ACTIONS.map((action) => (
-                            <td key={action.key} className="text-center">
-                              {row.permissionsByAction[action.key].map((permission) => (
-                                <CFormCheck
-                                  key={permission.id}
-                                  type="checkbox"
-                                  title={`${permission.method} ${permission.url}`}
-                                  checked={selectedPermissionIds.has(permission.id)}
-                                  onChange={() => onToggle(permission.id)}
-                                />
-                              ))}
-                            </td>
-                          ))}
+                          {ACTIONS.map((action) => {
+                            const cellPermissions = row.permissionsByAction[action.key];
+                            const cellPermissionIds = cellPermissions.map(
+                              (permission) => permission.id,
+                            );
+                            const assignedCount = cellPermissions.filter((permission) =>
+                              selectedPermissionIds.has(permission.id),
+                            ).length;
+                            const allSelected =
+                              cellPermissions.length > 0 &&
+                              assignedCount === cellPermissions.length;
+                            const someSelected = assignedCount > 0 && !allSelected;
+
+                            return (
+                              <td key={action.key} className="text-center">
+                                {cellPermissions.length === 0 ? (
+                                  <MatrixCheckbox
+                                    checked={false}
+                                    indeterminate={false}
+                                    title={NO_EXISTING_PERMISSION_TITLE}
+                                    ariaLabel={NO_EXISTING_PERMISSION_TITLE}
+                                    onChange={() => undefined}
+                                    disabled
+                                  />
+                                ) : (
+                                  <MatrixCheckbox
+                                    checked={allSelected}
+                                    indeterminate={someSelected}
+                                    title={cellPermissions
+                                      .map((permission) => `${permission.method} ${permission.url}`)
+                                      .join("\n")}
+                                    ariaLabel={`Permisos de ${row.resource} para ${action.label}`}
+                                    onChange={() => onToggleCell(cellPermissionIds)}
+                                  />
+                                )}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                   </React.Fragment>

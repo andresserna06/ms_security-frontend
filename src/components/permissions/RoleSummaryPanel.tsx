@@ -1,7 +1,9 @@
 import React from "react";
-import { CAlert, CBadge, CCol, CFormCheck, CProgress, CRow } from "@coreui/react";
+import { CBadge, CCol, CFormCheck, CProgress, CRow } from "@coreui/react";
 import { Role } from "../../models/Role";
 import SidebarSummary, { ThemeColor } from "../../components/common/SidebarSummary";
+import Alert from "../../components/common/Alert";
+import { buildRolePermissionSummary } from "../../utils/permissionMatrix";
 
 interface RoleSummaryPanelProps {
   role: Role | null;
@@ -13,7 +15,7 @@ interface RoleSummaryPanelProps {
 function SummaryItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="d-flex justify-content-between align-items-center mb-2">
-      <span className="text-body-secondary">{label}</span>
+      <span className="text-body-secondary text-nowrap">{label}</span>
       <strong>{children}</strong>
     </div>
   );
@@ -21,8 +23,10 @@ function SummaryItem({ label, children }: { label: string; children: React.React
 
 function CounterTile({ label, value, color }: { label: string; value: number; color: ThemeColor }) {
   return (
-    <div className={`rounded-3 p-2 h-100 text-center bg-${color}-subtle text-${color}-emphasis`}>
-      <div style={{ fontSize: "0.7rem" }}>{label}</div>
+    <div className={`rounded-3 p-1 h-100 text-center bg-${color}-subtle text-${color}-emphasis`}>
+      <div className="text-nowrap fw-semibold" style={{ fontSize: "0.62rem" }}>
+        {label}
+      </div>
       <div className="fs-4 fw-bold">{value}</div>
     </div>
   );
@@ -34,7 +38,7 @@ export default function RoleSummaryPanel({
   totalAssigned,
   modulesWithAccess,
 }: RoleSummaryPanelProps) {
-  const percentAssigned = totalAvailable === 0 ? 0 : Math.round((totalAssigned / totalAvailable) * 100);
+  const summary = buildRolePermissionSummary(totalAvailable, totalAssigned);
 
   return (
     <div className="d-flex flex-column gap-3">
@@ -42,34 +46,45 @@ export default function RoleSummaryPanel({
         <SummaryItem label="Nombre del rol:">
           {role ? <CBadge color="primary">{role.name}</CBadge> : "-"}
         </SummaryItem>
-        <SummaryItem label="Estado:">
-          <CBadge color="success">Activo</CBadge>
-        </SummaryItem>
-        <SummaryItem label="Usuarios asociados:">-</SummaryItem>
-        <SummaryItem label="Permisos asignados:">{totalAssigned}</SummaryItem>
+        <SummaryItem label="Total disponibles:">{summary.total}</SummaryItem>
+        <SummaryItem label="Permisos asignados:">{summary.assigned}</SummaryItem>
         <SummaryItem label="Módulos con acceso:">{modulesWithAccess}</SummaryItem>
 
         <CRow className="g-2 mt-2">
           <CCol xs={4}>
-            <CounterTile label="Disponibles" value={totalAvailable} color="primary" />
+            <CounterTile label="Disponibles" value={summary.total} color="primary" />
           </CCol>
           <CCol xs={4}>
-            <CounterTile label="Asignados" value={totalAssigned} color="success" />
+            <CounterTile label="Asignados" value={summary.assigned} color="success" />
           </CCol>
           <CCol xs={4}>
-            <CounterTile label="Sin asignar" value={totalAvailable - totalAssigned} color="warning" />
+            <CounterTile label="Sin asignar" value={summary.unassigned} color="warning" />
           </CCol>
         </CRow>
 
-        <CProgress className="mt-3" color="success" value={percentAssigned} />
+        <CProgress className="mt-3" color="success" value={summary.percentage} />
         <div className="small text-body-secondary text-center mt-1">
-          {percentAssigned}% de los permisos asignado
+          {summary.percentage}% de los permisos asignados
         </div>
       </SidebarSummary>
 
       <SidebarSummary title="Leyenda" color="info">
-        <CFormCheck id="legend-assigned" label="Permiso asignado" checked readOnly />
-        <CFormCheck id="legend-unassigned" label="Permiso no asignado" checked={false} readOnly />
+        <div className="d-flex flex-wrap gap-2">
+          <CFormCheck
+            id="legend-assigned"
+            label="Permiso asignado"
+            checked
+            readOnly
+            className="mb-0 small"
+          />
+          <CFormCheck
+            id="legend-unassigned"
+            label="Permiso no asignado"
+            checked={false}
+            readOnly
+            className="mb-0 small"
+          />
+        </div>
       </SidebarSummary>
 
       <SidebarSummary title="Reglas de acceso" color="secondary">
@@ -80,9 +95,10 @@ export default function RoleSummaryPanel({
         </ul>
       </SidebarSummary>
 
-      <CAlert color="danger" className="mb-0">
-        Retirar un permiso del rol no elimina el permiso del sistema.
-      </CAlert>
+      <Alert
+        type="danger"
+        message="Retirar un permiso del rol no elimina el permiso del sistema."
+      />
     </div>
   );
 }

@@ -10,7 +10,29 @@ export interface MatrixRow {
 
 export type MatrixGroups = Record<string, MatrixRow[]>;
 
+export interface RolePermissionSummary {
+  total: number;
+  assigned: number;
+  unassigned: number;
+  percentage: number;
+}
+
 export const ACTION_KEYS: ActionKey[] = ["ver", "listar", "crear", "actualizar", "eliminar"];
+
+export function buildRolePermissionSummary(
+  total: number,
+  assigned: number,
+): RolePermissionSummary {
+  const safeTotal = Math.max(0, total);
+  const safeAssigned = Math.max(0, assigned);
+
+  return {
+    total: safeTotal,
+    assigned: safeAssigned,
+    unassigned: Math.max(0, safeTotal - safeAssigned),
+    percentage: safeTotal === 0 ? 0 : Math.round((safeAssigned / safeTotal) * 100),
+  };
+}
 
 const MODULE_GROUPS: Record<string, string[]> = {
   "Administración": ["User", "Profile", "Session", "Role", "UserRole", "Permission", "RolePermission"],
@@ -46,7 +68,7 @@ const URL_SEGMENT_TO_MODEL: Record<string, string> = {
   profiles: "Profile",
   sessions: "Session",
   roles: "Role",
-  "user-roles": "UserRole",
+  "user-roles": "User",
   permissions: "Permission",
   "role-permissions": "RolePermission",
   tournaments: "Tournament",
@@ -72,12 +94,23 @@ function getResourceSegment(url: string): string | null {
   return isNested ? path[2] : path[0];
 }
 
-function getModel(permission: Permission): string {
+export function getPermissionModel(permission: Permission): string {
+  // El backend actual no devuelve model; si en el futuro lo expone, se prioriza.
+  if (permission.model?.trim()) {
+    return permission.model.trim();
+  }
+
   const resource = getResourceSegment(permission.url);
   if (resource) {
     return URL_SEGMENT_TO_MODEL[resource] ?? resource.charAt(0).toUpperCase() + resource.slice(1);
   }
-  return permission.model || "Otro";
+
+  return "Otro";
+}
+
+export function getPermissionResourceLabel(permission: Permission): string {
+  const model = getPermissionModel(permission);
+  return RESOURCE_LABELS[model] ?? model;
 }
 
 function getAction(permission: Permission): ActionKey | null {
@@ -113,7 +146,7 @@ function buildRow(model: string, permissions: Permission[]): MatrixRow {
 export function buildMatrixGroups(permissions: Permission[]): MatrixGroups {
   const byModel = new Map<string, Permission[]>();
   for (const permission of permissions) {
-    const model = getModel(permission);
+    const model = getPermissionModel(permission);
     byModel.set(model, [...(byModel.get(model) ?? []), permission]);
   }
 
