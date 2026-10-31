@@ -20,7 +20,9 @@
  */
 
 import React from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import { serviceContainer } from '../services/serviceContainer'
 
 /**
  * DefaultLayout functional component
@@ -35,14 +37,32 @@ import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/inde
  *
  * @returns {React.ReactElement} Complete application layout
  */
-const DefaultLayout = ({ roleService, permissionService }) => {
+const DefaultLayout = ({
+  authService = serviceContainer.authService,
+  roleService = serviceContainer.roleService,
+  permissionService = serviceContainer.permissionService,
+  userService = serviceContainer.userService,
+  profileService = serviceContainer.profileService,
+}) => {
+  const location = useLocation()
+
+  // TODO: Descomentar cuando los demás módulos (users, roles, permissions) envíen el token en sus servicios
+  // if (!authService.isAuthenticated()) {
+  //   return <Navigate to="/login" state={{ from: location }} replace />
+  // }
+
   return (
     <div>
       <AppSidebar />
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppHeader />
         <div className="body flex-grow-1">
-          <AppContent roleService={roleService} permissionService={permissionService} />
+          <AppContent
+            roleService={roleService}
+            permissionService={permissionService}
+            userService={userService}
+            profileService={profileService}
+          />
         </div>
         <AppFooter />
       </div>

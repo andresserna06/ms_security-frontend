@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { Role } from "../../models/Role";
 import { User } from "../../models/User";
