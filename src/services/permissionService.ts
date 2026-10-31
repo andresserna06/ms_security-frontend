@@ -59,8 +59,13 @@ export class PermissionService implements IPermissionService {
 
   async getByRole(roleId: number): Promise<Permission[] | null> {
     try {
-      const data = await apiClient.get(`/permissions/role/${roleId}`);
-      return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
+      const data = await apiClient.get(`/role-permissions/roles/${roleId}`);
+      return Array.isArray(data)
+        ? data
+            .map((rolePermission: any) => rolePermission.permission)
+            .filter((permission: any) => Boolean(permission))
+            .map((permission: any) => new Permission(permission))
+        : null;
     } catch (error) {
       console.error(error);
       return null;
