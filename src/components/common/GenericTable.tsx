@@ -22,6 +22,8 @@ interface GenericTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   errorMessage?: string;
+  onRowClick?: (item: T) => void;
+  selectedKey?: React.Key | null;
 }
 
 export default function GenericTable<T>({
@@ -32,6 +34,8 @@ export default function GenericTable<T>({
   isLoading = false,
   emptyMessage = "No hay registros para mostrar",
   errorMessage = "Ocurrió un error al cargar la información",
+  onRowClick,
+  selectedKey,
 }: GenericTableProps<T>) {
   if (isLoading) {
     return <Loader text="Cargando..." />;
@@ -57,35 +61,49 @@ export default function GenericTable<T>({
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr key={getKey(item, index)}>
-              {columns.map((col, cIndex) => (
-                <td key={cIndex}>
-                  {col.render
-                    ? col.render(item, index)
-                    : col.accessor
-                    ? String((item as any)[col.accessor] ?? "")
-                    : null}
-                </td>
-              ))}
-              {actions.length > 0 ? (
-                <td>
-                  <div className="d-flex flex-wrap gap-2">
-                    {actions.map((action, aIndex) => (
-                      <button
-                        key={aIndex}
-                        type="button"
-                        className={`btn btn-${action.variant ?? "secondary"}`}
-                        onClick={() => action.onClick(item)}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-                </td>
-              ) : null}
-            </tr>
-          ))}
+          {data.map((item, index) => {
+            const rowKey = getKey(item, index);
+            const isSelected =
+              selectedKey !== undefined && selectedKey !== null && rowKey === selectedKey;
+
+            return (
+              <tr
+                key={rowKey}
+                className={isSelected ? "table-active" : undefined}
+                style={onRowClick ? { cursor: "pointer" } : undefined}
+                onClick={onRowClick ? () => onRowClick(item) : undefined}
+              >
+                {columns.map((col, cIndex) => (
+                  <td key={cIndex}>
+                    {col.render
+                      ? col.render(item, index)
+                      : col.accessor
+                      ? String((item as any)[col.accessor] ?? "")
+                      : null}
+                  </td>
+                ))}
+                {actions.length > 0 ? (
+                  <td>
+                    <div className="d-flex flex-wrap gap-2">
+                      {actions.map((action, aIndex) => (
+                        <button
+                          key={aIndex}
+                          type="button"
+                          className={`btn btn-${action.variant ?? "secondary"}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            action.onClick(item);
+                          }}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

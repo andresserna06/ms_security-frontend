@@ -94,11 +94,11 @@ export default function UserRolesManager({
     onRolesUpdated();
   };
 
-  const handleRemoveRole = async (roleId?: number) => {
+  const handleRemoveRole = async (assignment: UserRole) => {
+    const roleId = assignment.role?.id ?? assignment.roleId;
     if (!roleId) {
       return;
     }
-
     setSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
@@ -203,7 +203,7 @@ export default function UserRolesManager({
                   variant="outline"
                   size="sm"
                   disabled={submitting}
-                  onClick={() => handleRemoveRole(assignment.role?.id ?? assignment.roleId)}
+                  onClick={() => handleRemoveRole(assignment)}
                   title="Retirar rol del usuario"
                 >
                   <CIcon icon={cilTrash} className="me-1" />

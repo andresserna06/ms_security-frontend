@@ -1,18 +1,15 @@
 import { Permission } from "../models/Permission";
 import { Role } from "../models/Role";
-import { IPermissionService } from "./interfaces/IPermissionService";
-import type { RolePermissionSaveResult } from "./interfaces/IPermissionService";
-
-const BASE_URL = import.meta.env.VITE_URL_BACKEND;
+import { apiClient } from "./apiClient";
+import { IPermissionService, RolePermissionSaveResult } from "./interfaces/IPermissionService";
 
 export class PermissionService implements IPermissionService {
-  private endpoint = "/api/permissions";
-
+  getRolesByPermission(permissionId: number): Promise<Role[] | null> {
+    throw new Error("Method not implemented.");
+  }
   async getAll(): Promise<Permission[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`);
-      if (!response.ok) throw new Error("Error fetching permissions");
-      const data = await response.json();
+      const data = await apiClient.get("/permissions");
       return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
     } catch (error) {
       console.error(error);
@@ -22,9 +19,7 @@ export class PermissionService implements IPermissionService {
 
   async getById(id: number): Promise<Permission | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`);
-      if (!response.ok) throw new Error("Error fetching permission");
-      const data = await response.json();
+      const data = await apiClient.get(`/permissions/${id}`);
       return new Permission(data);
     } catch (error) {
       console.error(error);
@@ -34,13 +29,7 @@ export class PermissionService implements IPermissionService {
 
   async create(permission: Permission): Promise<Permission | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(permission),
-      });
-      if (!response.ok) throw new Error("Error creating permission");
-      const data = await response.json();
+      const data = await apiClient.post("/permissions", permission);
       return new Permission(data);
     } catch (error) {
       console.error(error);
@@ -50,13 +39,7 @@ export class PermissionService implements IPermissionService {
 
   async update(id: number, permission: Permission): Promise<Permission | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(permission),
-      });
-      if (!response.ok) throw new Error("Error updating permission");
-      const data = await response.json();
+      const data = await apiClient.put(`/permissions/${id}`, permission);
       return new Permission(data);
     } catch (error) {
       console.error(error);
@@ -66,10 +49,7 @@ export class PermissionService implements IPermissionService {
 
   async remove(id: number): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Error deleting permission");
+      await apiClient.delete(`/permissions/${id}`);
       return true;
     } catch (error) {
       console.error(error);
@@ -79,26 +59,8 @@ export class PermissionService implements IPermissionService {
 
   async getByRole(roleId: number): Promise<Permission[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}/api/role-permissions/roles/${roleId}`);
-      if (!response.ok) throw new Error("Error fetching permissions by role");
-      const data = await response.json();
-      return Array.isArray(data)
-        ? data.map((rp: any) => new Permission(rp.permission ?? { id: rp.permissionId }))
-        : null;
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  }
-
-  async getRolesByPermission(permissionId: number): Promise<Role[] | null> {
-    try {
-      const response = await fetch(`${BASE_URL}/api/role-permissions/permissions/${permissionId}`);
-      if (!response.ok) throw new Error("Error fetching roles by permission");
-      const data = await response.json();
-      return Array.isArray(data)
-        ? data.filter((rp: any) => rp.role).map((rp: any) => new Role(rp.role))
-        : null;
+      const data = await apiClient.get(`/permissions/role/${roleId}`);
+      return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
     } catch (error) {
       console.error(error);
       return null;
@@ -106,20 +68,12 @@ export class PermissionService implements IPermissionService {
   }
 
   private async assignPermission(roleId: number, permissionId: number): Promise<number> {
-    const response = await fetch(`${BASE_URL}/api/role-permissions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roleId, permissionId }),
-    });
-    if (!response.ok) throw new Error("Error assigning permission");
+    await apiClient.post("/role-permissions", { roleId, permissionId });
     return permissionId;
   }
 
   private async removePermission(roleId: number, permissionId: number): Promise<number> {
-    const response = await fetch(`${BASE_URL}/api/role-permissions/${roleId}/${permissionId}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Error removing permission");
+    await apiClient.delete(`/role-permissions/${roleId}/${permissionId}`);
     return permissionId;
   }
 
@@ -128,9 +82,7 @@ export class PermissionService implements IPermissionService {
    */
   async assignToRole(roleId: number, permissionIds: number[]): Promise<boolean | null> {
     try {
-      await Promise.all(
-        permissionIds.map((permissionId) => this.assignPermission(roleId, permissionId)),
-      );
+      await apiClient.post(`/roles/${roleId}/permissions`, { permissionIds });
       return true;
     } catch (error) {
       console.error(error);
@@ -140,7 +92,7 @@ export class PermissionService implements IPermissionService {
 
   async removeFromRole(roleId: number, permissionId: number): Promise<boolean | null> {
     try {
-      await this.removePermission(roleId, permissionId);
+      await apiClient.delete(`/roles/${roleId}/permissions/${permissionId}`);
       return true;
     } catch (error) {
       console.error(error);

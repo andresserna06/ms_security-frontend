@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8181/api'
+const BACKEND_URL = (import.meta.env.VITE_URL_BACKEND || 'http://localhost:8181').replace(/\/+$/, '')
+const API_BASE_URL = (import.meta.env.VITE_API_URL || `${BACKEND_URL}/api`).replace(/\/+$/, '')
 
 const parseResponse = async (response) => {
   if (response.status === 204) {
@@ -10,6 +11,19 @@ const parseResponse = async (response) => {
   const data = isJson ? await response.json() : await response.text()
 
   if (!response.ok) {
+    // TODO: Descomentar cuando todos los servicios envíen el token JWT en sus headers
+    // const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
+    // if (response.status === 401 && !isAuthEndpoint) {
+    //   localStorage.removeItem('accessToken')
+    //   localStorage.removeItem('token')
+    //   localStorage.removeItem('tokenType')
+    //   localStorage.removeItem('tokenExpiresAt')
+    //   localStorage.removeItem('userEmail')
+    //   if (!window.location.hash.includes('/login')) {
+    //     window.location.hash = '#/login'
+    //   }
+    // }
+
     let errorMessage = 'Error al procesar la solicitud en el servidor'
     let fieldErrors = null
 
@@ -34,12 +48,26 @@ const parseResponse = async (response) => {
   return data
 }
 
+/**
+ * @returns {Record<string, string>}
+ */
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken')
+  /** @type {Record<string, string>} */
+  const headers = {}
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return headers
+}
+
 export const apiClient = {
   get: async (endpoint) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     })
     return parseResponse(response)
@@ -51,6 +79,7 @@ export const apiClient = {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(body),
     })
@@ -63,6 +92,7 @@ export const apiClient = {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(body),
     })
@@ -74,6 +104,7 @@ export const apiClient = {
       method: 'PATCH',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     }
     if (body !== null) {
@@ -89,6 +120,7 @@ export const apiClient = {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
+        ...getAuthHeaders(),
       },
     })
     return parseResponse(response)
