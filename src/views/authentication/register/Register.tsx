@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CAlert,
   CButton,
@@ -15,64 +15,75 @@ import {
   CRow,
   CSpinner,
   CTooltip,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { eye } from 'src/assets/icons/eye'
-import { authService } from 'src/services/authService'
-import jpaSports from '../../../assets/images/JPASports.jpg'
+} from "@coreui/react";
+import CIcon from "@coreui/icons-react";
+import { eye } from "../../../assets/icons/eye";
+import { User } from "../../../models/User";
+import { IAuthService } from "../../../services/interfaces/IAuthService";
+import { serviceContainer } from "../../../services/serviceContainer";
+import jpaSports from "../../../assets/images/JPASports.jpg";
 
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])\S{8,72}$/
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])\S{8,72}$/;
 
-const Register = () => {
-  const navigate = useNavigate()
+export interface RegisterProps {
+  authService?: IAuthService;
+}
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+export default function Register({ authService = serviceContainer.authService }: RegisterProps) {
+  const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setError('')
-    setSuccessMessage('')
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
-    const cleanName = name.trim()
-    const cleanEmail = email.trim()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setSuccessMessage("");
+
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
 
     if (!cleanName || !cleanEmail || !password) {
-      setError('Todos los campos son obligatorios.')
-      return
+      setError("Todos los campos son obligatorios.");
+      return;
     }
 
     if (cleanName.length < 2 || cleanName.length > 100) {
-      setError('El nombre debe tener entre 2 y 100 caracteres.')
-      return
+      setError("El nombre debe tener entre 2 y 100 caracteres.");
+      return;
     }
 
     if (!PASSWORD_REGEX.test(password)) {
       setError(
-        'La contraseña debe tener entre 8 y 72 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&), sin espacios.',
-      )
-      return
+        "La contraseña debe tener entre 8 y 72 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&), sin espacios.",
+      );
+      return;
     }
 
     try {
-      setLoading(true)
-      await authService.register(cleanName, cleanEmail, password)
-      setSuccessMessage('Cuenta creada exitosamente. Redirigiendo al inicio de sesión...')
+      setLoading(true);
+      const userModel = new User({
+        name: cleanName,
+        email: cleanEmail,
+        password,
+      });
+      await authService.register(userModel);
+      setSuccessMessage("Cuenta creada exitosamente. Redirigiendo al inicio de sesión...");
       setTimeout(() => {
-        navigate('/login')
-      }, 1500)
-    } catch (err) {
-      setError(err?.message || 'No fue posible registrar la cuenta. Verifica los datos.')
+        navigate("/login");
+      }, 1500);
+    } catch (err: any) {
+      setError(err?.message || "No fue posible registrar la cuenta. Verifica los datos.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="bg-white position-relative overflow-hidden min-vh-100 d-flex flex-row align-items-center py-4">
@@ -80,10 +91,10 @@ const Register = () => {
         aria-hidden="true"
         className="d-none d-md-block position-absolute top-0 bottom-0 start-0"
         style={{
-          width: '74%',
-          pointerEvents: 'none',
+          width: "74%",
+          pointerEvents: "none",
           background:
-            'linear-gradient(to right, #70B038 0%, #cbe5b3 30%, #eff8e8 60%, #ffffff 100%)',
+            "linear-gradient(to right, #70B038 0%, #cbe5b3 30%, #eff8e8 60%, #ffffff 100%)",
           zIndex: 0,
         }}
       />
@@ -92,7 +103,13 @@ const Register = () => {
           <CCol md={8} lg={6} xl={5}>
             <div className="d-flex flex-column gap-4">
               <div className="text-center">
-                <img src={jpaSports} alt="JPA Sports" width="96" height="96" className="rounded-circle" />
+                <img
+                  src={jpaSports}
+                  alt="JPA Sports"
+                  width="96"
+                  height="96"
+                  className="rounded-circle"
+                />
               </div>
 
               <CCard className="p-4 shadow-sm border-0">
@@ -103,7 +120,7 @@ const Register = () => {
                   </p>
 
                   {error && (
-                    <CAlert color="danger" dismissible onClose={() => setError('')}>
+                    <CAlert color="danger" dismissible onClose={() => setError("")}>
                       {error}
                     </CAlert>
                   )}
@@ -143,7 +160,7 @@ const Register = () => {
                       <CInputGroup>
                         <CFormInput
                           id="password"
-                          type={showPassword ? 'text' : 'password'}
+                          type={showPassword ? "text" : "password"}
                           placeholder="Tu contraseña"
                           autoComplete="new-password"
                           value={password}
@@ -153,7 +170,7 @@ const Register = () => {
                         />
                         <CInputGroupText>
                           <CTooltip
-                            content={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                            content={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
                           >
                             <CButton
                               type="button"
@@ -177,7 +194,7 @@ const Register = () => {
                       <CButton
                         type="submit"
                         className="w-100 text-white fw-semibold py-2"
-                        style={{ backgroundColor: '#70B038', borderColor: '#70B038' }}
+                        style={{ backgroundColor: "#70B038", borderColor: "#70B038" }}
                         disabled={loading}
                       >
                         {loading ? (
@@ -186,7 +203,7 @@ const Register = () => {
                             Registrando cuenta...
                           </>
                         ) : (
-                          'Crear cuenta'
+                          "Crear cuenta"
                         )}
                       </CButton>
                     </CCol>
@@ -195,8 +212,8 @@ const Register = () => {
               </CCard>
 
               <div className="text-center text-body-secondary">
-                ¿Ya tienes una cuenta?{' '}
-                <Link to="/authentication/login" style={{ color: '#70B038' }}>
+                ¿Ya tienes una cuenta?{" "}
+                <Link to="/authentication/login" style={{ color: "#70B038" }}>
                   Inicia sesión
                 </Link>
               </div>
@@ -205,7 +222,6 @@ const Register = () => {
         </CRow>
       </CContainer>
     </div>
-  )
+  );
 }
 
-export default Register

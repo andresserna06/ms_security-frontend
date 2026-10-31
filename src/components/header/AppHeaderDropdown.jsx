@@ -23,11 +23,11 @@ import {
   cilUser,
 } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import { authService } from 'src/services/authService'
+import { serviceContainer } from 'src/services/serviceContainer'
 
 import avatar8 from './../../assets/images/avatars/8.jpg'
 
-const AppHeaderDropdown = () => {
+const AppHeaderDropdown = ({ authService = serviceContainer.authService }) => {
   const navigate = useNavigate()
 
   const handleLogout = async (e) => {

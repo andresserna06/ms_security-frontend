@@ -19,6 +19,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react'
+import { serviceContainer } from './services/serviceContainer'
 import './scss/style.scss'
 
 // We use those styles to show code examples, you should remove them in your application.
@@ -30,16 +31,6 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 // Pages
 const Login = React.lazy(() => import('./views/authentication/login/Login'))
 const Register = React.lazy(() => import('./views/authentication/register/Register'))
-const CheckEmail = React.lazy(() => import('./views/authentication/check-email/CheckEmail'))
-const ResetPassword = React.lazy(
-  () => import('./views/authentication/reset-password/ResetPassword'),
-)
-const ChangePassword = React.lazy(
-  () => import('./views/authentication/change-password/ChangePassword'),
-)
-const PasswordChanged = React.lazy(
-  () => import('./views/authentication/password-changed/PasswordChanged'),
-)
 const Page404 = React.lazy(() => import('./views/error-pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
 
@@ -65,7 +56,14 @@ const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
  * import App from './App'
  * ReactDOM.render(<App />, document.getElementById('root'))
  */
-const App = () => {
+const App = ({
+  authService = serviceContainer.authService,
+  googleOAuthProvider = serviceContainer.googleOAuthProvider,
+  roleService = serviceContainer.roleService,
+  permissionService = serviceContainer.permissionService,
+  userService = serviceContainer.userService,
+  profileService = serviceContainer.profileService,
+}) => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
 
@@ -93,41 +91,39 @@ const App = () => {
         }
       >
         <Routes>
-          <Route exact path="/login" name="Login Page" element={<Login />} />
-          <Route exact path="/authentication/login" name="Login Page" element={<Login />} />
+          <Route
+            exact
+            path="/login"
+            name="Login Page"
+            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+          />
+          <Route
+            exact
+            path="/authentication/login"
+            name="Login Page"
+            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+          />
           <Route
             exact
             path="/authentication/register"
             name="Register Page"
-            element={<Register />}
-          />
-          <Route
-            exact
-            path="/authentication/check-email"
-            name="Check Email Page"
-            element={<CheckEmail />}
-          />
-          <Route
-            exact
-            path="/authentication/reset-password"
-            name="Reset Password Page"
-            element={<ResetPassword />}
-          />
-          <Route
-            exact
-            path="/authentication/change-password"
-            name="Change Password Page"
-            element={<ChangePassword />}
-          />
-          <Route
-            exact
-            path="/authentication/password-changed"
-            name="Password Changed Page"
-            element={<PasswordChanged />}
+            element={<Register authService={authService} />}
           />
           <Route exact path="/error-pages/404" name="Page 404" element={<Page404 />} />
           <Route exact path="/error-pages/500" name="Page 500" element={<Page500 />} />
-          <Route path="*" name="Home" element={<DefaultLayout />} />
+          <Route
+            path="*"
+            name="Home"
+            element={
+              <DefaultLayout
+                authService={authService}
+                roleService={roleService}
+                permissionService={permissionService}
+                userService={userService}
+                profileService={profileService}
+              />
+            }
+          />
         </Routes>
       </Suspense>
     </HashRouter>

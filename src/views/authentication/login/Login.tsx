@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CAlert,
   CButton,
@@ -16,139 +16,140 @@ import {
   CRow,
   CSpinner,
   CTooltip,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { GoogleLogin } from '@react-oauth/google'
-import { apple } from 'src/assets/brand/apple'
-import { eye } from 'src/assets/icons/eye'
-import { authService } from 'src/services/authService'
-import jpaSports from '../../../assets/images/JPASports.jpg'
+} from "@coreui/react";
+import CIcon from "@coreui/icons-react";
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { apple } from "../../../assets/brand/apple";
+import { eye } from "../../../assets/icons/eye";
+import { IAuthService } from "../../../services/interfaces/IAuthService";
+import { IOAuthProviderService } from "../../../services/interfaces/IOAuthProviderService";
+import { serviceContainer } from "../../../services/serviceContainer";
+import jpaSports from "../../../assets/images/JPASports.jpg";
 
-const Login = () => {
-  const navigate = useNavigate()
+export interface LoginProps {
+  authService?: IAuthService;
+  oauthProvider?: IOAuthProviderService;
+}
+
+type AuthStep = "CREDENTIALS" | "2FA";
+
+export default function Login({
+  authService = serviceContainer.authService,
+  oauthProvider = serviceContainer.googleOAuthProvider,
+}: LoginProps) {
+  const navigate = useNavigate();
 
   // Estados del flujo de autenticación
-  const [step, setStep] = useState('CREDENTIALS') // 'CREDENTIALS' | '2FA'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [code2Fa, setCode2Fa] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
+  const [step, setStep] = useState<AuthStep>("CREDENTIALS");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [code2Fa, setCode2Fa] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
 
   // Estados de retroalimentación visual
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [infoMessage, setInfoMessage] = useState('')
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [infoMessage, setInfoMessage] = useState<string>("");
 
   // Manejador del Paso 1: Enviar credenciales
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setInfoMessage('')
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setInfoMessage("");
 
     if (!email.trim() || !password) {
-      setError('Por favor ingresa tu correo y contraseña.')
-      return
+      setError("Por favor ingresa tu correo y contraseña.");
+      return;
     }
 
     try {
-      setLoading(true)
-      const response = await authService.login(email, password)
+      setLoading(true);
+      const session = await authService.login(email, password);
       setInfoMessage(
-        response?.message || 'Código de verificación de 6 dígitos enviado a tu correo.',
-      )
-      setStep('2FA')
-    } catch (err) {
-      setError(err?.message || 'Credenciales incorrectas o usuario inhabilitado.')
+        session?.message || "Código de verificación de 6 dígitos enviado a tu correo.",
+      );
+      setStep("2FA");
+    } catch (err: any) {
+      setError(err?.message || "Credenciales incorrectas o usuario inhabilitado.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Manejador del Paso 2: Verificar código 2FA
-  const handleVerify2FaSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  const handleVerify2FaSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
 
-    const cleanCode = code2Fa.trim()
+    const cleanCode = code2Fa.trim();
     if (!/^\d{6}$/.test(cleanCode)) {
-      setError('El código 2FA debe tener exactamente 6 dígitos numéricos.')
-      return
+      setError("El código 2FA debe tener exactamente 6 dígitos numéricos.");
+      return;
     }
 
     try {
-      setLoading(true)
-      await authService.verify2Fa(email, cleanCode)
-      // Redirigir al dashboard al completar la autenticación
-      navigate('/dashboard')
-    } catch (err) {
-      setError(err?.message || 'Código incorrecto o expirado.')
+      setLoading(true);
+      await authService.verify2Fa(email, cleanCode);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Código incorrecto o expirado.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Reenviar código 2FA
   const handleResendCode = async () => {
-    setError('')
-    setInfoMessage('')
+    setError("");
+    setInfoMessage("");
     try {
-      setLoading(true)
-      const response = await authService.login(email, password)
+      setLoading(true);
+      const session = await authService.login(email, password);
       setInfoMessage(
-        response?.message || 'Se ha reenviado un nuevo código a tu correo electrónico.',
-      )
-    } catch (err) {
-      setError(err?.message || 'Error al reenviar el código. Intenta nuevamente.')
+        session?.message || "Se ha reenviado un nuevo código a tu correo electrónico.",
+      );
+    } catch (err: any) {
+      setError(err?.message || "Error al reenviar el código. Intenta nuevamente.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Volver al formulario de credenciales
   const handleBackToCredentials = () => {
-    setStep('CREDENTIALS')
-    setCode2Fa('')
-    setError('')
-    setInfoMessage('')
-  }
+    setStep("CREDENTIALS");
+    setCode2Fa("");
+    setError("");
+    setInfoMessage("");
+  };
 
-  // Extrae el correo del payload del idToken de Google (solo para mostrarlo; el backend es quien valida)
-  const getEmailFromIdToken = (idToken) => {
-    try {
-      const payload = idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-      return JSON.parse(atob(payload))?.email || ''
-    } catch {
-      return ''
-    }
-  }
+  // Inicio de sesión con Google consumiendo las interfaces de inversión de dependencia (IOAuthProviderService + IAuthService)
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setError("");
+    setInfoMessage("");
 
-  // Inicio de sesión con Google: se envía el idToken al backend y se omite el 2FA
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setError('')
-    setInfoMessage('')
-
-    const idToken = credentialResponse?.credential
+    const idToken = credentialResponse?.credential;
     if (!idToken) {
-      setError('No se recibió el token de Google. Intenta nuevamente.')
-      return
+      setError("No se recibió el token de Google. Intenta nuevamente.");
+      return;
     }
 
     try {
-      setLoading(true)
-      await authService.loginGoogle(idToken, getEmailFromIdToken(idToken))
-      navigate('/dashboard')
-    } catch (err) {
-      // Incluye el rechazo por conflicto de proveedor (cuenta LOCAL vs GOOGLE)
-      setError(err?.message || 'No fue posible iniciar sesión con Google.')
+      setLoading(true);
+      const googleEmail = oauthProvider.extractEmailFromToken(idToken);
+      await authService.loginWithProvider(oauthProvider.getProviderName(), idToken, googleEmail);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err?.message || "No fue posible iniciar sesión con Google.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleError = () => {
-    setError('El inicio de sesión con Google fue cancelado o falló.')
-  }
+    setError("El inicio de sesión con Google fue cancelado o falló.");
+  };
 
   return (
     <div className="bg-white position-relative overflow-hidden min-vh-100 d-flex flex-row align-items-center py-4">
@@ -156,10 +157,10 @@ const Login = () => {
         aria-hidden="true"
         className="d-none d-md-block position-absolute top-0 bottom-0 start-0"
         style={{
-          width: '74%',
-          pointerEvents: 'none',
+          width: "74%",
+          pointerEvents: "none",
           background:
-            'linear-gradient(to right, #70B038 0%, #cbe5b3 30%, #eff8e8 60%, #ffffff 100%)',
+            "linear-gradient(to right, #70B038 0%, #cbe5b3 30%, #eff8e8 60%, #ffffff 100%)",
           zIndex: 0,
         }}
       />
@@ -168,24 +169,30 @@ const Login = () => {
           <CCol md={8} lg={6} xl={5}>
             <div className="d-flex flex-column gap-4">
               <div className="text-center">
-                <img src={jpaSports} alt="JPA Sports" width="96" height="96" className="rounded-circle" />
+                <img
+                  src={jpaSports}
+                  alt="JPA Sports"
+                  width="96"
+                  height="96"
+                  className="rounded-circle"
+                />
               </div>
 
               <CCard className="p-4 shadow-sm border-0">
                 <CCardBody className="d-flex flex-column gap-3">
                   {error && (
-                    <CAlert color="danger" dismissible onClose={() => setError('')}>
+                    <CAlert color="danger" dismissible onClose={() => setError("")}>
                       {error}
                     </CAlert>
                   )}
 
                   {infoMessage && (
-                    <CAlert color="info" dismissible onClose={() => setInfoMessage('')}>
+                    <CAlert color="info" dismissible onClose={() => setInfoMessage("")}>
                       {infoMessage}
                     </CAlert>
                   )}
 
-                  {step === 'CREDENTIALS' ? (
+                  {step === "CREDENTIALS" ? (
                     <>
                       <h2 className="h5 text-center mb-0 fw-bold">Iniciar sesión en tu cuenta</h2>
                       <p className="text-body-secondary text-center small mb-2">
@@ -208,16 +215,11 @@ const Login = () => {
                         </CCol>
 
                         <CCol xs={12}>
-                          <div className="d-flex justify-content-between">
-                            <CFormLabel htmlFor="password">Contraseña</CFormLabel>
-                            <Link to="/authentication/reset-password" style={{ color: '#70B038' }}>
-                              ¿Olvidaste tu contraseña?
-                            </Link>
-                          </div>
+                          <CFormLabel htmlFor="password">Contraseña</CFormLabel>
                           <CInputGroup>
                             <CFormInput
                               id="password"
-                              type={showPassword ? 'text' : 'password'}
+                              type={showPassword ? "text" : "password"}
                               placeholder="Tu contraseña"
                               autoComplete="current-password"
                               value={password}
@@ -226,7 +228,9 @@ const Login = () => {
                               disabled={loading}
                             />
                             <CInputGroupText>
-                              <CTooltip content={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}>
+                              <CTooltip
+                                content={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                              >
                                 <CButton
                                   type="button"
                                   color="link"
@@ -255,7 +259,7 @@ const Login = () => {
                           <CButton
                             type="submit"
                             className="w-100 text-white fw-semibold py-2"
-                            style={{ backgroundColor: '#70B038', borderColor: '#70B038' }}
+                            style={{ backgroundColor: "#70B038", borderColor: "#70B038" }}
                             disabled={loading}
                           >
                             {loading ? (
@@ -264,7 +268,7 @@ const Login = () => {
                                 Validando credenciales...
                               </>
                             ) : (
-                              'Continuar'
+                              "Continuar"
                             )}
                           </CButton>
                         </CCol>
@@ -296,7 +300,12 @@ const Login = () => {
                           )}
                         </CCol>
                         <CCol xs={12} sm={6}>
-                          <CButton type="button" variant="outline" className="w-100" disabled={loading}>
+                          <CButton
+                            type="button"
+                            variant="outline"
+                            className="w-100"
+                            disabled={loading}
+                          >
                             <CIcon icon={apple} className="me-1" />
                             Apple
                           </CButton>
@@ -310,10 +319,10 @@ const Login = () => {
                         <div
                           className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
                           style={{
-                            width: '48px',
-                            height: '48px',
-                            backgroundColor: 'rgba(112, 176, 56, 0.15)',
-                            color: '#70B038',
+                            width: "48px",
+                            height: "48px",
+                            backgroundColor: "rgba(112, 176, 56, 0.15)",
+                            color: "#70B038",
                           }}
                         >
                           <svg
@@ -339,7 +348,10 @@ const Login = () => {
 
                       <CForm className="row gy-3" onSubmit={handleVerify2FaSubmit}>
                         <CCol xs={12}>
-                          <CFormLabel htmlFor="code2Fa" className="text-center d-block fw-semibold">
+                          <CFormLabel
+                            htmlFor="code2Fa"
+                            className="text-center d-block fw-semibold"
+                          >
                             Código de Verificación
                           </CFormLabel>
                           <CFormInput
@@ -352,11 +364,11 @@ const Login = () => {
                             autoComplete="one-time-code"
                             value={code2Fa}
                             onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, '')
-                              setCode2Fa(val)
+                              const val = e.target.value.replace(/\D/g, "");
+                              setCode2Fa(val);
                             }}
                             className="text-center fs-3 tracking-wider py-2"
-                            style={{ letterSpacing: '0.4em', fontWeight: 'bold' }}
+                            style={{ letterSpacing: "0.4em", fontWeight: "bold" }}
                             autoFocus
                             required
                             disabled={loading}
@@ -370,7 +382,7 @@ const Login = () => {
                           <CButton
                             type="submit"
                             className="w-100 text-white fw-semibold py-2"
-                            style={{ backgroundColor: '#70B038', borderColor: '#70B038' }}
+                            style={{ backgroundColor: "#70B038", borderColor: "#70B038" }}
                             disabled={loading || code2Fa.length !== 6}
                           >
                             {loading ? (
@@ -379,12 +391,15 @@ const Login = () => {
                                 Verificando código...
                               </>
                             ) : (
-                              'Verificar y Acceder'
+                              "Verificar y Acceder"
                             )}
                           </CButton>
                         </CCol>
 
-                        <CCol xs={12} className="d-flex justify-content-between align-items-center pt-2">
+                        <CCol
+                          xs={12}
+                          className="d-flex justify-content-between align-items-center pt-2"
+                        >
                           <CButton
                             type="button"
                             color="link"
@@ -398,7 +413,7 @@ const Login = () => {
                             type="button"
                             color="link"
                             className="p-0 text-decoration-none small fw-semibold"
-                            style={{ color: '#70B038' }}
+                            style={{ color: "#70B038" }}
                             onClick={handleResendCode}
                             disabled={loading}
                           >
@@ -412,8 +427,8 @@ const Login = () => {
               </CCard>
 
               <div className="text-center text-body-secondary">
-                ¿No tienes una cuenta?{' '}
-                <Link to="/authentication/register" style={{ color: '#70B038' }}>
+                ¿No tienes una cuenta?{" "}
+                <Link to="/authentication/register" style={{ color: "#70B038" }}>
                   Regístrate
                 </Link>
               </div>
@@ -422,7 +437,6 @@ const Login = () => {
         </CRow>
       </CContainer>
     </div>
-  )
+  );
 }
 
-export default Login

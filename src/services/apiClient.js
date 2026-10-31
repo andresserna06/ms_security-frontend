@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8181/api'
+const BACKEND_URL = (import.meta.env.VITE_URL_BACKEND || 'http://localhost:8181').replace(/\/+$/, '')
+const API_BASE_URL = (import.meta.env.VITE_API_URL || `${BACKEND_URL}/api`).replace(/\/+$/, '')
 
 const parseResponse = async (response) => {
   if (response.status === 204) {
@@ -10,19 +11,18 @@ const parseResponse = async (response) => {
   const data = isJson ? await response.json() : await response.text()
 
   if (!response.ok) {
-    // Si el backend responde 401 en una ruta protegida (fuera de /auth/*),
-    // limpiamos la sesión local y redirigimos a la vista de login
-    const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
-    if (response.status === 401 && !isAuthEndpoint) {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('token')
-      localStorage.removeItem('tokenType')
-      localStorage.removeItem('tokenExpiresAt')
-      localStorage.removeItem('userEmail')
-      if (!window.location.hash.includes('/login')) {
-        window.location.hash = '#/login'
-      }
-    }
+    // TODO: Descomentar cuando todos los servicios envíen el token JWT en sus headers
+    // const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
+    // if (response.status === 401 && !isAuthEndpoint) {
+    //   localStorage.removeItem('accessToken')
+    //   localStorage.removeItem('token')
+    //   localStorage.removeItem('tokenType')
+    //   localStorage.removeItem('tokenExpiresAt')
+    //   localStorage.removeItem('userEmail')
+    //   if (!window.location.hash.includes('/login')) {
+    //     window.location.hash = '#/login'
+    //   }
+    // }
 
     let errorMessage = 'Error al procesar la solicitud en el servidor'
     let fieldErrors = null
@@ -48,9 +48,17 @@ const parseResponse = async (response) => {
   return data
 }
 
-const getAuthHeaders = () => {
+/**
+ * @returns {Record<string, string>}
+ */
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('accessToken')
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  /** @type {Record<string, string>} */
+  const headers = {}
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return headers
 }
 
 export const apiClient = {
