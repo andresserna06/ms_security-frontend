@@ -31,6 +31,7 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 // Pages
 const Login = React.lazy(() => import('./views/authentication/login/Login'))
 const Register = React.lazy(() => import('./views/authentication/register/Register'))
+const GithubCallback = React.lazy(() => import('./views/authentication/oauth/GithubCallback'))
 const Page404 = React.lazy(() => import('./views/error-pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
 
@@ -59,6 +60,7 @@ const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
 const App = ({
   authService = serviceContainer.authService,
   googleOAuthProvider = serviceContainer.googleOAuthProvider,
+  githubOAuthProvider = serviceContainer.githubOAuthProvider,
   roleService = serviceContainer.roleService,
   permissionService = serviceContainer.permissionService,
   userService = serviceContainer.userService,
@@ -95,13 +97,31 @@ const App = ({
             exact
             path="/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+            element={
+              <Login
+                authService={authService}
+                oauthProvider={googleOAuthProvider}
+                githubOAuthProvider={githubOAuthProvider}
+              />
+            }
           />
           <Route
             exact
             path="/authentication/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+            element={
+              <Login
+                authService={authService}
+                oauthProvider={googleOAuthProvider}
+                githubOAuthProvider={githubOAuthProvider}
+              />
+            }
+          />
+          <Route
+            exact
+            path="/authentication/oauth/github/callback"
+            name="GitHub OAuth Callback"
+            element={<GithubCallback authService={authService} />}
           />
           <Route
             exact

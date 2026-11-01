@@ -9,6 +9,14 @@ export type OAuthProviderType = "GOOGLE" | "GITHUB" | "MICROSOFT";
  */
 export interface IOAuthProviderService {
   getProviderName(): OAuthProviderType;
-  extractEmailFromToken(idToken: string): string;
-  authenticate(idToken: string): Promise<Session>;
+  extractEmailFromToken(credential: string): string;
+  authenticate(credential: string): Promise<Session>;
+}
+
+/**
+ * Proveedor OAuth que inicia el flujo redirigiendo el navegador al proveedor
+ * (authorization code flow). Google usa su propio botón, GitHub usa esta interfaz.
+ */
+export interface IRedirectOAuthProviderService extends IOAuthProviderService {
+  getAuthorizationUrl(state: string): string;
 }

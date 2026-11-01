@@ -4,13 +4,16 @@ import { UserRoleService } from "./userRoleService";
 import { UserService } from "./userService";
 import { ProfileService } from "./profileService";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
+import { GithubOAuthProviderService } from "./githubOAuthProviderService";
 import { AuthService } from "./authService";
 
 const googleOAuthProvider = new GoogleOAuthProviderService();
+const githubOAuthProvider = new GithubOAuthProviderService();
 
 export const serviceContainer = {
   googleOAuthProvider,
-  authService: new AuthService([googleOAuthProvider]),
+  githubOAuthProvider,
+  authService: new AuthService([googleOAuthProvider, githubOAuthProvider]),
   roleService: new RoleService(),
   permissionService: new PermissionService(),
   userRoleService: new UserRoleService(),

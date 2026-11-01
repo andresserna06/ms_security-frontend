@@ -18,17 +18,21 @@ import {
   CTooltip,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
+import { cibGithub } from "@coreui/icons";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { apple } from "../../../assets/brand/apple";
 import { eye } from "../../../assets/icons/eye";
 import { IAuthService } from "../../../services/interfaces/IAuthService";
-import { IOAuthProviderService } from "../../../services/interfaces/IOAuthProviderService";
+import {
+  IOAuthProviderService,
+  IRedirectOAuthProviderService,
+} from "../../../services/interfaces/IOAuthProviderService";
 import { serviceContainer } from "../../../services/serviceContainer";
 import jpaSports from "../../../assets/images/JPASports.jpg";
 
 export interface LoginProps {
   authService?: IAuthService;
   oauthProvider?: IOAuthProviderService;
+  githubOAuthProvider?: IRedirectOAuthProviderService;
 }
 
 type AuthStep = "CREDENTIALS" | "2FA";
@@ -36,6 +40,7 @@ type AuthStep = "CREDENTIALS" | "2FA";
 export default function Login({
   authService = serviceContainer.authService,
   oauthProvider = serviceContainer.googleOAuthProvider,
+  githubOAuthProvider = serviceContainer.githubOAuthProvider,
 }: LoginProps) {
   const navigate = useNavigate();
 
@@ -149,6 +154,24 @@ export default function Login({
 
   const handleGoogleError = () => {
     setError("El inicio de sesión con Google fue cancelado o falló.");
+  };
+
+  // Inicio de sesión con GitHub mediante authorization code flow
+  const handleGithubLogin = () => {
+    setError("");
+    setInfoMessage("");
+
+    try {
+      const state =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      sessionStorage.setItem("github_oauth_state", state);
+      window.location.assign(githubOAuthProvider.getAuthorizationUrl(state));
+    } catch (err: any) {
+      setError(err?.message || "No fue posible iniciar sesión con GitHub.");
+    }
   };
 
   return (
@@ -304,10 +327,11 @@ export default function Login({
                             type="button"
                             variant="outline"
                             className="w-100"
+                            onClick={handleGithubLogin}
                             disabled={loading}
                           >
-                            <CIcon icon={apple} className="me-1" />
-                            Apple
+                            <CIcon icon={cibGithub} className="me-1" />
+                            GitHub
                           </CButton>
                         </CCol>
                       </CRow>

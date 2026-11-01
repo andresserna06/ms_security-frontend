@@ -20,6 +20,7 @@ createRoot(document.getElementById('root')).render(
       <App
         authService={serviceContainer.authService}
         googleOAuthProvider={serviceContainer.googleOAuthProvider}
+        githubOAuthProvider={serviceContainer.githubOAuthProvider}
         roleService={serviceContainer.roleService}
         permissionService={serviceContainer.permissionService}
         userService={serviceContainer.userService}

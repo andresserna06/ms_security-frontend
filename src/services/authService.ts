@@ -2,13 +2,19 @@ import { Session } from "../models/Session";
 import { User } from "../models/User";
 import { apiClient } from "./apiClient";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
+import { GithubOAuthProviderService } from "./githubOAuthProviderService";
 import { IAuthService } from "./interfaces/IAuthService";
 import { IOAuthProviderService, OAuthProviderType } from "./interfaces/IOAuthProviderService";
 
 export class AuthService implements IAuthService {
   private strategies: Map<OAuthProviderType, IOAuthProviderService>;
 
-  constructor(providerStrategies: IOAuthProviderService[] = [new GoogleOAuthProviderService()]) {
+  constructor(
+    providerStrategies: IOAuthProviderService[] = [
+      new GoogleOAuthProviderService(),
+      new GithubOAuthProviderService(),
+    ],
+  ) {
     this.strategies = new Map();
     providerStrategies.forEach((strategy) => {
       this.strategies.set(strategy.getProviderName(), strategy);
@@ -60,7 +66,7 @@ export class AuthService implements IAuthService {
    */
   async loginWithProvider(
     provider: OAuthProviderType,
-    idToken: string,
+    credential: string,
     email = "",
   ): Promise<Session> {
     const strategy = this.strategies.get(provider);
@@ -68,15 +74,46 @@ export class AuthService implements IAuthService {
       throw new Error(`Proveedor de autenticación no soportado: ${provider}`);
     }
 
-    const resolvedEmail = email || strategy.extractEmailFromToken(idToken);
-    const session = await strategy.authenticate(idToken);
-    session.email = resolvedEmail;
+    const session = await strategy.authenticate(credential);
+    const resolvedEmail =
+      email ||
+      session.email ||
+      strategy.extractEmailFromToken(credential) ||
+      this.extractEmailFromJwt(session.accessToken);
+
+    if (resolvedEmail) {
+      session.email = resolvedEmail;
+    }
 
     if (session.accessToken) {
       this.setSession(session, resolvedEmail);
     }
 
     return session;
+  }
+
+  /**
+   * Lee el claim "email" del JWT emitido por ms-security.
+   * La firma se valida en el backend; aquí solo se usa para guardar el correo
+   * del usuario cuando el proveedor OAuth no lo expone directamente.
+   */
+  private extractEmailFromJwt(token?: string): string {
+    if (!token) {
+      return "";
+    }
+
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) {
+        return "";
+      }
+
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const claims = JSON.parse(atob(base64));
+      return typeof claims?.email === "string" ? claims.email : "";
+    } catch {
+      return "";
+    }
   }
 
   /**
