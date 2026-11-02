@@ -87,6 +87,13 @@ export class AuthService implements IAuthService {
   }
 
   /**
+   * Inicio de sesión con Microsoft Azure OAuth 2.0 delegando en la estrategia IOAuthProviderService (DIP)
+   */
+  async loginAzure(idToken: string, email = ""): Promise<Session> {
+    return this.loginWithProvider("AZURE", idToken, email);
+  }
+
+  /**
    * Cierre de sesión en el backend y limpieza de almacenamiento local
    */
   async logout(): Promise<void> {

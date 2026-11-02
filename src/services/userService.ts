@@ -1,7 +1,7 @@
 import { User } from "../models/User";
 import { IUserService } from "./interfaces/IUserService";
 
-const BASE_URL = import.meta.env.VITE_URL_BACKEND;
+const BASE_URL = import.meta.env.VITE_URL_BACKEND || "http://localhost:8181";
 
 export class UserService implements IUserService {
   private endpoint = "/api/users";

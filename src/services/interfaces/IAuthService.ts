@@ -7,6 +7,7 @@ export interface IAuthService {
   login(email: string, password: string): Promise<Session>;
   verify2Fa(email: string, code: string): Promise<Session>;
   loginGoogle(idToken: string, email?: string): Promise<Session>;
+  loginAzure(idToken: string, email?: string): Promise<Session>;
   loginWithProvider(provider: OAuthProviderType, idToken: string, email?: string): Promise<Session>;
   logout(): Promise<void>;
   setSession(session: Session, email?: string): void;

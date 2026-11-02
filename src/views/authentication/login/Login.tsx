@@ -29,6 +29,7 @@ import jpaSports from "../../../assets/images/JPASports.jpg";
 export interface LoginProps {
   authService?: IAuthService;
   oauthProvider?: IOAuthProviderService;
+  azureOAuthProvider?: IOAuthProviderService;
 }
 
 type AuthStep = "CREDENTIALS" | "2FA";
@@ -36,6 +37,7 @@ type AuthStep = "CREDENTIALS" | "2FA";
 export default function Login({
   authService = serviceContainer.authService,
   oauthProvider = serviceContainer.googleOAuthProvider,
+  azureOAuthProvider = serviceContainer.azureOAuthProvider,
 }: LoginProps) {
   const navigate = useNavigate();
 
@@ -149,6 +151,30 @@ export default function Login({
 
   const handleGoogleError = () => {
     setError("El inicio de sesión con Google fue cancelado o falló.");
+  };
+
+  const handleAzureLogin = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (!azureOAuthProvider?.signIn) {
+        throw new Error("El proveedor de Microsoft no está disponible.");
+      }
+      const idToken = await azureOAuthProvider.signIn();
+      const azureEmail = azureOAuthProvider.extractEmailFromToken(idToken);
+      await authService.loginWithProvider("AZURE", idToken, azureEmail);
+      navigate("/dashboard");
+    } catch (err: any) {
+      if (
+        err?.name === "BrowserAuthError" &&
+        (err?.message?.includes("user_cancelled") || err?.errorCode === "user_cancelled")
+      ) {
+        return;
+      }
+      setError(err?.message || "No fue posible iniciar sesión con Microsoft Azure.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -300,15 +326,45 @@ export default function Login({
                           )}
                         </CCol>
                         <CCol xs={12} sm={6}>
-                          <CButton
+                          <button
                             type="button"
-                            variant="outline"
-                            className="w-100"
+                            className="btn w-100 d-flex align-items-center justify-content-center"
+                            style={{
+                              height: "40px",
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #dadce0",
+                              borderRadius: "4px",
+                              color: "#3c4043",
+                              fontSize: "14px",
+                              fontWeight: 500,
+                              boxShadow: "0 1px 2px rgba(60,64,67,0.08)",
+                              transition: "background-color .2s, border-color .2s, box-shadow .2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f8f9fa";
+                              e.currentTarget.style.borderColor = "#c6c9cc";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#ffffff";
+                              e.currentTarget.style.borderColor = "#dadce0";
+                            }}
                             disabled={loading}
+                            onClick={handleAzureLogin}
                           >
-                            <CIcon icon={apple} className="me-1" />
-                            Apple
-                          </CButton>
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 21 21"
+                              className="me-2 flex-shrink-0"
+                              aria-hidden="true"
+                            >
+                              <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                              <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                              <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                              <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                            </svg>
+                            <span>Microsoft</span>
+                          </button>
                         </CCol>
                       </CRow>
                     </>
