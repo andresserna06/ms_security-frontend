@@ -16,6 +16,8 @@ export interface IAuthService {
   setSession(session: Session, email?: string): void;
   getToken(): string | null;
   getUserEmail(): string;
+  getPermissions(): string[];
+  hasPermission(method: string, url: string): boolean;
   isAuthenticated(): boolean;
   clearSession(): void;
 }

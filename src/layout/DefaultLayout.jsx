@@ -47,9 +47,9 @@ const DefaultLayout = ({
   const location = useLocation()
 
   // TODO: Descomentar cuando los demás módulos (users, roles, permissions) envíen el token en sus servicios
-  // if (!authService.isAuthenticated()) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />
-  // }
+  if (!authService.isAuthenticated()) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
   return (
     <div>

@@ -5,6 +5,7 @@ import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
 import { GithubOAuthProviderService } from "./githubOAuthProviderService";
 import { IAuthService } from "./interfaces/IAuthService";
 import { IOAuthProviderService, OAuthProviderType } from "./interfaces/IOAuthProviderService";
+import { matchesPermission } from "../utils/PermissionMatcher";
 
 export class AuthService implements IAuthService {
   private strategies: Map<OAuthProviderType, IOAuthProviderService>;
@@ -164,6 +165,57 @@ export class AuthService implements IAuthService {
    */
   getUserEmail(): string {
     return localStorage.getItem("userEmail") || "";
+  }
+
+  /**
+   * Lista de permisos que trae el token, cada uno como "GET:/api/users"
+   */
+  getPermissions(): string[] {
+    const token = this.getToken();
+    if (!token) {
+      return [];
+    }
+
+    try {
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const claims = JSON.parse(atob(base64));
+      return Array.isArray(claims?.permissions) ? claims.permissions : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Comprueba si el usuario tiene el permiso indicado.
+   * Solo mejora la experiencia visual; la autorización real la hace el backend.
+   */
+  hasPermission(method: string, url: string): boolean {
+    return matchesPermission(this.getPermissions(), method, url);
+  }
+
+  /**
+   * Indica si el token trae el rol ADMIN en el claim "roles".
+   * Solo mejora la experiencia: la seguridad real la hace el backend.
+   */
+  isAdmin(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const claims = JSON.parse(atob(base64));
+      const roles: unknown = claims?.roles;
+      if (!Array.isArray(roles)) {
+        return false;
+      }
+      return roles.some(
+        (role) => typeof role === "string" && role.replace(/^ROLE_/, "").toUpperCase() === "ADMIN",
+      );
+    } catch {
+      return false;
+    }
   }
 
   /**

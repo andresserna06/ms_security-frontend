@@ -13,6 +13,7 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import PermissionMatrix from "../../components/permissions/PermissionMatrix";
 import RoleSummaryPanel from "../../components/permissions/RoleSummaryPanel";
 import { buildMatrixGroups, countModulesWithAccess } from "../../utils/permissionMatrix";
+import authService from "../../services/authService";
 
 interface RolePermissionsProps {
   roleService: IRoleService;
@@ -28,6 +29,9 @@ const INFO_MESSAGE =
   "Los permisos seleccionados se conservarán después de cerrar e iniciar sesión nuevamente.";
 
 export default function RolePermissions({ roleService, permissionService }: RolePermissionsProps) {
+  // Sin este permiso la pantalla es solo de lectura: se puede mirar, no cambiar.
+  const canEdit = authService.hasPermission("PUT", "/api/roles/1");
+
   const [roles, setRoles] = useState<Role[] | null>(null);
   const [allPermissions, setAllPermissions] = useState<Permission[] | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
@@ -329,7 +333,7 @@ export default function RolePermissions({ roleService, permissionService }: Role
       <PermissionMatrix
         groups={matrixGroups}
         selectedPermissionIds={assignedIds}
-        onToggleCell={handleToggleCell}
+        onToggleCell={canEdit ? handleToggleCell : () => {}}
       />
     );
   }
@@ -395,18 +399,22 @@ export default function RolePermissions({ roleService, permissionService }: Role
                   ))}
                 </CFormSelect>
               </div>
-              <GenericButton
-                label="Guardar cambios"
-                variant="success"
-                onClick={handleSave}
-                disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
-              />
-              <GenericButton
-                label="Restablecer"
-                variant="outline-warning"
-                onClick={handleReset}
-                disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
-              />
+              {canEdit && (
+                <>
+                  <GenericButton
+                    label="Guardar cambios"
+                    variant="success"
+                    onClick={handleSave}
+                    disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
+                  />
+                  <GenericButton
+                    label="Restablecer"
+                    variant="outline-warning"
+                    onClick={handleReset}
+                    disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
+                  />
+                </>
+              )}
             </CCardBody>
           </CCard>
 
@@ -421,7 +429,12 @@ export default function RolePermissions({ roleService, permissionService }: Role
           ) : null}
 
           <div className="mb-3">
-            <Alert type="info" message={INFO_MESSAGE} />
+            <Alert
+              type="info"
+              message={
+                canEdit ? INFO_MESSAGE : "Tienes acceso de solo lectura: puedes consultar los permisos pero no cambiarlos."
+              }
+            />
           </div>
 
           {content}

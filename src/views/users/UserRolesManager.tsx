@@ -95,27 +95,37 @@ export default function UserRolesManager({
   };
 
   const handleRemoveRole = async (assignment: UserRole) => {
-    const roleId = assignment.role?.id ?? assignment.roleId;
-    if (!roleId) {
-      return;
-    }
-    setSubmitting(true);
-    setErrorMessage("");
-    setSuccessMessage("");
+  const roleId = assignment.role?.id ?? assignment.roleId;
 
-    const removed = await service.removeRole(user.id, roleId);
+  if (!roleId) {
+    alert("No se pudo identificar el rol que deseas retirar.");
+    return;
+  }
 
-    if (removed !== true) {
-      setErrorMessage("No fue posible retirar el rol.");
-      setSubmitting(false);
+  const roleName = assignment.role?.name ?? `ID ${roleId}`;
+
+  const confirmed = window.confirm(
+    `¿Estás seguro de que deseas retirar el rol "${roleName}" de este usuario?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const success = await service.removeRole(user.id, roleId);
+
+    if (!success) {
+      alert("No se pudo retirar el rol.");
       return;
     }
 
     await loadRolesData();
-    setSuccessMessage("Rol retirado del usuario (el rol permanece en el sistema).");
-    setSubmitting(false);
     onRolesUpdated();
-  };
+
+  } catch (error) {
+    console.error("Error al retirar el rol:", error);
+    alert("Ocurrió un error al retirar el rol.");
+  }
+};
 
   if (loading) {
     return (
