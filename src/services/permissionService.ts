@@ -1,16 +1,15 @@
 import { Permission } from "../models/Permission";
-import { IPermissionService } from "./interfaces/IPermissionService";
-
-const BASE_URL = import.meta.env.VITE_URL_BACKEND;
+import { Role } from "../models/Role";
+import { apiClient } from "./apiClient";
+import { IPermissionService, RolePermissionSaveResult } from "./interfaces/IPermissionService";
 
 export class PermissionService implements IPermissionService {
-  private endpoint = "/api/permissions";
-
+  getRolesByPermission(permissionId: number): Promise<Role[] | null> {
+    throw new Error("Method not implemented.");
+  }
   async getAll(): Promise<Permission[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`);
-      if (!response.ok) throw new Error("Error fetching permissions");
-      const data = await response.json();
+      const data = await apiClient.get("/permissions");
       return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
     } catch (error) {
       console.error(error);
@@ -20,10 +19,38 @@ export class PermissionService implements IPermissionService {
 
   async getById(id: number): Promise<Permission | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`);
-      if (!response.ok) throw new Error("Error fetching permission");
-      const data = await response.json();
+      const data = await apiClient.get(`/permissions/${id}`);
       return new Permission(data);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async create(permission: Permission): Promise<Permission | null> {
+    try {
+      const data = await apiClient.post("/permissions", permission);
+      return new Permission(data);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async update(id: number, permission: Permission): Promise<Permission | null> {
+    try {
+      const data = await apiClient.put(`/permissions/${id}`, permission);
+      return new Permission(data);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async remove(id: number): Promise<boolean | null> {
+    try {
+      await apiClient.delete(`/permissions/${id}`);
+      return true;
     } catch (error) {
       console.error(error);
       return null;
@@ -32,24 +59,35 @@ export class PermissionService implements IPermissionService {
 
   async getByRole(roleId: number): Promise<Permission[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/role/${roleId}`);
-      if (!response.ok) throw new Error("Error fetching permissions by role");
-      const data = await response.json();
-      return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
+      const data = await apiClient.get(`/role-permissions/roles/${roleId}`);
+      return Array.isArray(data)
+        ? data
+            .map((rolePermission: any) => rolePermission.permission)
+            .filter((permission: any) => Boolean(permission))
+            .map((permission: any) => new Permission(permission))
+        : null;
     } catch (error) {
       console.error(error);
       return null;
     }
   }
 
+  private async assignPermission(roleId: number, permissionId: number): Promise<number> {
+    await apiClient.post("/role-permissions", { roleId, permissionId });
+    return permissionId;
+  }
+
+  private async removePermission(roleId: number, permissionId: number): Promise<number> {
+    await apiClient.delete(`/role-permissions/${roleId}/${permissionId}`);
+    return permissionId;
+  }
+
+  /**
+   * @deprecated Usar saveRolePermissions para conocer el resultado por permiso.
+   */
   async assignToRole(roleId: number, permissionIds: number[]): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}/api/roles/${roleId}/permissions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ permissionIds }),
-      });
-      if (!response.ok) throw new Error("Error assigning permissions");
+      await apiClient.post(`/roles/${roleId}/permissions`, { permissionIds });
       return true;
     } catch (error) {
       console.error(error);
@@ -59,11 +97,56 @@ export class PermissionService implements IPermissionService {
 
   async removeFromRole(roleId: number, permissionId: number): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}/api/roles/${roleId}/permissions/${permissionId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Error removing permission");
+      await apiClient.delete(`/roles/${roleId}/permissions/${permissionId}`);
       return true;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async saveRolePermissions(
+    roleId: number,
+    addIds: number[],
+    removeIds: number[],
+  ): Promise<RolePermissionSaveResult | null> {
+    try {
+      const uniqueAddIds = Array.from(new Set(addIds)).filter((id) => !removeIds.includes(id));
+      const uniqueRemoveIds = Array.from(new Set(removeIds)).filter((id) => !addIds.includes(id));
+
+      const [addResults, removeResults] = await Promise.all([
+        Promise.allSettled(
+          uniqueAddIds.map((permissionId) => this.assignPermission(roleId, permissionId)),
+        ),
+        Promise.allSettled(
+          uniqueRemoveIds.map((permissionId) => this.removePermission(roleId, permissionId)),
+        ),
+      ]);
+
+      const result: RolePermissionSaveResult = {
+        addedIds: [],
+        removedIds: [],
+        failedAddIds: [],
+        failedRemoveIds: [],
+      };
+
+      addResults.forEach((response, index) => {
+        if (response.status === "fulfilled") {
+          result.addedIds.push(response.value);
+        } else {
+          result.failedAddIds.push(uniqueAddIds[index]);
+        }
+      });
+
+      removeResults.forEach((response, index) => {
+        if (response.status === "fulfilled") {
+          result.removedIds.push(response.value);
+        } else {
+          result.failedRemoveIds.push(uniqueRemoveIds[index]);
+        }
+      });
+
+      return result;
     } catch (error) {
       console.error(error);
       return null;

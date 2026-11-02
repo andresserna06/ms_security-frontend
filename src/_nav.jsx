@@ -1,7 +1,7 @@
 import React from 'react'
 import CIcon from '@coreui/icons-react'
-import { cilSpeedometer, cilUser, cilPeople } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
+import { cilSpeedometer, cilUser, cilPeople, cilLockLocked } from '@coreui/icons'
 
 const _nav = [
   {
@@ -25,6 +25,18 @@ const _nav = [
     name: 'Roles',
     to: '/roles',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+  },
+    {
+    component: CNavItem,
+    name: 'Asignar Permisos',
+    to: '/role-permissions',
+    icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Permisos',
+    to: '/permissions',
+    icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
   },
 ]
 

@@ -1,4 +1,5 @@
 import { Role } from "../models/Role";
+import { User } from "../models/User";
 import { UserRole } from "../models/UserRole";
 import { apiClient } from "./apiClient";
 import { IUserRoleService } from "./interfaces/IUserRoleService";
@@ -8,6 +9,36 @@ export class UserRoleService implements IUserRoleService {
     try {
       const data = await apiClient.get("/roles");
       return Array.isArray(data) ? data.map((role: any) => new Role(role)) : null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async getAllUsers(): Promise<User[] | null> {
+    try {
+      const data = await apiClient.get("/users");
+      return Array.isArray(data) ? data.map((user: any) => new User(user)) : null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async getByRole(roleId: number): Promise<UserRole[] | null> {
+    try {
+      const data = await apiClient.get(`/user-roles/roles/${roleId}`);
+      return Array.isArray(data)
+        ? data.map(
+            (roleUser: any) =>
+              new UserRole({
+                id: roleUser.id,
+                roleId: roleUser.roleId,
+                userId: roleUser.user?.id,
+                user: roleUser.user ? new User(roleUser.user) : undefined,
+              }),
+          )
+        : null;
     } catch (error) {
       console.error(error);
       return null;
