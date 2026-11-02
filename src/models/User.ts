@@ -7,6 +7,7 @@ export class User {
   email?: string;
   password?: string;
   active?: boolean;
+  authProvider?: string;
   profile?: Profile | null;
   roles?: UserRole[];
 

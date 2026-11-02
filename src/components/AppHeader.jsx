@@ -56,6 +56,7 @@ import {
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import { serviceContainer } from '../services/serviceContainer'
 
 /**
  * AppHeader functional component
@@ -68,7 +69,11 @@ import { AppHeaderDropdown } from './header/index'
  *
  * @returns {React.ReactElement} Header component with navigation and controls
  */
-const AppHeader = () => {
+const AppHeader = ({
+  authService = serviceContainer.authService,
+  profileService = serviceContainer.profileService,
+  userService = serviceContainer.userService,
+}) => {
   const headerRef = useRef()
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const [searchVisible, setSearchVisible] = useState(false)
@@ -211,7 +216,11 @@ const AppHeader = () => {
           <li className="nav-item py-1">
             <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
           </li>
-          <AppHeaderDropdown />
+          <AppHeaderDropdown
+            authService={authService}
+            profileService={profileService}
+            userService={userService}
+          />
         </CHeaderNav>
       </CContainer>
       <CContainer className="px-4" fluid>

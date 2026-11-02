@@ -2,7 +2,7 @@ import { Session } from "../models/Session";
 import { User } from "../models/User";
 import { apiClient } from "./apiClient";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
-import { IAuthService } from "./interfaces/IAuthService";
+import { AuthUserInfo, IAuthService } from "./interfaces/IAuthService";
 import { IOAuthProviderService, OAuthProviderType } from "./interfaces/IOAuthProviderService";
 
 export class AuthService implements IAuthService {
@@ -112,6 +112,27 @@ export class AuthService implements IAuthService {
   setSession(session: Session, email = ""): void {
     if (session.accessToken) {
       localStorage.setItem("accessToken", session.accessToken);
+      try {
+        const parts = session.accessToken.split(".");
+        if (parts.length === 3) {
+          const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          const payload = JSON.parse(atob(payloadBase64));
+          if (payload.name) {
+            localStorage.setItem("userName", payload.name);
+          }
+          if (payload.sub) {
+            localStorage.setItem("userId", String(payload.sub));
+          }
+          if (payload.authProvider) {
+            localStorage.setItem("authProvider", payload.authProvider);
+          }
+          if (payload.email) {
+            localStorage.setItem("userEmail", payload.email);
+          }
+        }
+      } catch (err) {
+        console.warn("Error decoding token claims:", err);
+      }
     }
     localStorage.removeItem("token");
     localStorage.setItem("tokenType", session.tokenType || "Bearer");
@@ -134,6 +155,97 @@ export class AuthService implements IAuthService {
    */
   getUserEmail(): string {
     return localStorage.getItem("userEmail") || "";
+  }
+
+  /**
+   * Obtiene el nombre del usuario autenticado
+   */
+  getUserName(): string {
+    const stored = localStorage.getItem("userName");
+    if (stored) return stored;
+    const token = this.getToken();
+    if (token) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+          if (payload.name) {
+            localStorage.setItem("userName", payload.name);
+            return payload.name;
+          }
+        }
+      } catch {}
+    }
+    const email = this.getUserEmail();
+    return email ? email.split("@")[0] : "Usuario";
+  }
+
+  /**
+   * Obtiene el ID numérico del usuario autenticado
+   */
+  getUserId(): number | null {
+    const stored = localStorage.getItem("userId");
+    if (stored) return Number(stored);
+    const token = this.getToken();
+    if (token) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+          if (payload.sub) {
+            localStorage.setItem("userId", String(payload.sub));
+            return Number(payload.sub);
+          }
+        }
+      } catch {}
+    }
+    return null;
+  }
+
+  /**
+   * Obtiene la imagen de avatar o genera una dinámica con las iniciales del usuario
+   */
+  getUserAvatar(): string {
+    const stored = localStorage.getItem("userAvatar");
+    if (stored) return stored;
+    const name = this.getUserName();
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2eb85c&color=fff&bold=true`;
+  }
+
+  /**
+   * Obtiene el proveedor de autenticación del usuario (LOCAL, GOOGLE, AZURE)
+   */
+  getAuthProvider(): string {
+    const stored = localStorage.getItem("authProvider");
+    if (stored) return stored;
+    const token = this.getToken();
+    if (token) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+          if (payload.authProvider) {
+            localStorage.setItem("authProvider", payload.authProvider);
+            return payload.authProvider;
+          }
+        }
+      } catch {}
+    }
+    return "LOCAL";
+  }
+
+  /**
+   * Retorna el objeto unificado con la información del usuario autenticado
+   */
+  getCurrentUser(): AuthUserInfo | null {
+    if (!this.isAuthenticated()) return null;
+    return {
+      id: this.getUserId() ?? 0,
+      name: this.getUserName(),
+      email: this.getUserEmail(),
+      authProvider: this.getAuthProvider(),
+      avatar: this.getUserAvatar(),
+    };
   }
 
   /**
@@ -187,6 +299,10 @@ export class AuthService implements IAuthService {
     localStorage.removeItem("tokenType");
     localStorage.removeItem("tokenExpiresAt");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("authProvider");
+    localStorage.removeItem("userAvatar");
   }
 }
 
