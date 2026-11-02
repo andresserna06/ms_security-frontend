@@ -14,17 +14,29 @@ import { serviceContainer } from './services/serviceContainer'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
-createRoot(document.getElementById('root')).render(
-  <GoogleOAuthProvider clientId={googleClientId}>
-    <Provider store={store}>
-      <App
-        authService={serviceContainer.authService}
-        googleOAuthProvider={serviceContainer.googleOAuthProvider}
-        roleService={serviceContainer.roleService}
-        permissionService={serviceContainer.permissionService}
-        userService={serviceContainer.userService}
-        profileService={serviceContainer.profileService}
-      />
-    </Provider>
-  </GoogleOAuthProvider>,
-)
+const isMsalPopup =
+  typeof window !== 'undefined' &&
+  window.opener &&
+  window.opener !== window &&
+  (window.name.includes('msal') ||
+    window.location.hash.includes('code=') ||
+    window.location.hash.includes('state=') ||
+    window.location.hash.includes('error='))
+
+if (!isMsalPopup) {
+  createRoot(document.getElementById('root')).render(
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <Provider store={store}>
+        <App
+          authService={serviceContainer.authService}
+          googleOAuthProvider={serviceContainer.googleOAuthProvider}
+          azureOAuthProvider={serviceContainer.azureOAuthProvider}
+          roleService={serviceContainer.roleService}
+          permissionService={serviceContainer.permissionService}
+          userService={serviceContainer.userService}
+          profileService={serviceContainer.profileService}
+        />
+      </Provider>
+    </GoogleOAuthProvider>,
+  )
+}

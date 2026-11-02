@@ -1,7 +1,7 @@
 import { Role } from "../models/Role";
 import { IRoleService } from "./interfaces/IRoleService";
 
-const BASE_URL = import.meta.env.VITE_URL_BACKEND;
+const BASE_URL = import.meta.env.VITE_URL_BACKEND || "http://localhost:8181";
 
 export class RoleService implements IRoleService {
   private endpoint = "/api/roles";

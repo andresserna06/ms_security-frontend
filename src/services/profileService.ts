@@ -1,7 +1,7 @@
 import { Profile } from "../models/Profile";
 import { IProfileService } from "./interfaces/IProfileService";
 
-const BASE_URL = import.meta.env.VITE_URL_BACKEND;
+const BASE_URL = import.meta.env.VITE_URL_BACKEND || "http://localhost:8181";
 
 export class ProfileService implements IProfileService {
   private getEndpoint(userId: number): string {

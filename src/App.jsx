@@ -59,6 +59,7 @@ const Page500 = React.lazy(() => import('./views/error-pages/page500/Page500'))
 const App = ({
   authService = serviceContainer.authService,
   googleOAuthProvider = serviceContainer.googleOAuthProvider,
+  azureOAuthProvider = serviceContainer.azureOAuthProvider,
   roleService = serviceContainer.roleService,
   permissionService = serviceContainer.permissionService,
   userService = serviceContainer.userService,
@@ -95,13 +96,13 @@ const App = ({
             exact
             path="/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+            element={<Login authService={authService} oauthProvider={googleOAuthProvider} azureOAuthProvider={azureOAuthProvider} />}
           />
           <Route
             exact
             path="/authentication/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} />}
+            element={<Login authService={authService} oauthProvider={googleOAuthProvider} azureOAuthProvider={azureOAuthProvider} />}
           />
           <Route
             exact
