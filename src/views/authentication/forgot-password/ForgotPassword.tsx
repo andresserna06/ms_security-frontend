@@ -143,8 +143,9 @@ export default function ForgotPassword({
                         ¿No recibiste el correo? Verifica tu carpeta de spam o intenta nuevamente en unos minutos.
                       </p>
                       <CButton
-                        color="secondary"
-                        variant="outline"
+                        type="button"
+                        className="w-100 text-white fw-semibold py-2"
+                        style={{ backgroundColor: "#70B038", borderColor: "#70B038" }}
                         onClick={() => {
                           setSuccessMessage("");
                           setEmail("");
