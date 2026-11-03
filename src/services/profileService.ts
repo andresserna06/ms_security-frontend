@@ -1,5 +1,6 @@
 import { Profile } from "../models/Profile";
 import { IProfileService } from "./interfaces/IProfileService";
+import { authFetch } from "./authFetch";
 
 const BASE_URL = import.meta.env.VITE_URL_BACKEND || "http://localhost:8181";
 
@@ -10,7 +11,7 @@ export class ProfileService implements IProfileService {
 
   async getByUserId(userId: number): Promise<Profile | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.getEndpoint(userId)}`);
+      const response = await authFetch(`${BASE_URL}${this.getEndpoint(userId)}`);
       if (!response.ok) throw new Error("Error fetching profile");
       const data = await response.json();
       return data ? new Profile(data) : null;
@@ -22,7 +23,7 @@ export class ProfileService implements IProfileService {
 
   async create(userId: number, profile: Profile): Promise<Profile | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
+      const response = await authFetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
@@ -38,7 +39,7 @@ export class ProfileService implements IProfileService {
 
   async update(userId: number, profile: Profile): Promise<Profile | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
+      const response = await authFetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
@@ -54,7 +55,7 @@ export class ProfileService implements IProfileService {
 
   async remove(userId: number): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
+      const response = await authFetch(`${BASE_URL}${this.getEndpoint(userId)}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Error deleting profile");
