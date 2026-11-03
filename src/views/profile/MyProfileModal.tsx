@@ -212,6 +212,11 @@ export default function MyProfileModal({
       }
 
       onProfileUpdated(cleanName, cleanPhoto);
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", {
+          detail: { name: cleanName, photo: cleanPhoto, userId: currentUser.id },
+        })
+      );
       setSuccessMessage("Perfil actualizado exitosamente.");
       setTimeout(() => {
         onClose();
