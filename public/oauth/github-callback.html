@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub OAuth</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        // GitHub no permite "#" en la callback URL (RFC 6749), por eso este
+        // archivo recibe ?code&state y los reenvía a la ruta hash de React.
+        window.location.replace(
+          "/#/authentication/oauth/github/callback" + window.location.search,
+        );
+      })();
+    </script>
+  </body>
+</html>

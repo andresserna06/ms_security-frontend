@@ -8,6 +8,10 @@ interface PermissionMatrixProps {
   groups: MatrixGroups;
   selectedPermissionIds: Set<number>;
   onToggleCell: (permissionIds: number[]) => void;
+  canAssign: boolean;
+  canRemove: boolean;
+  isSaving: boolean;
+  readOnly?: boolean;
 }
 
 interface MatrixCheckboxProps {
@@ -27,7 +31,8 @@ const ACTIONS: { key: ActionKey; label: string }[] = [
   { key: "eliminar", label: "Eliminar" },
 ];
 
-const NO_EXISTING_PERMISSION_TITLE = "Este permiso no existe en el sistema";
+const NO_EXISTING_PERMISSION_TITLE =
+  "No hay un permiso de catálogo para un endpoint y método admitidos";
 
 function MatrixCheckbox({
   checked,
@@ -62,6 +67,10 @@ export default function PermissionMatrix({
   groups,
   selectedPermissionIds,
   onToggleCell,
+  canAssign,
+  canRemove,
+  isSaving,
+  readOnly = false,
 }: PermissionMatrixProps) {
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
 
@@ -111,7 +120,10 @@ export default function PermissionMatrix({
                       onClick={() => toggleModule(moduleName)}
                     >
                       <td colSpan={1 + ACTIONS.length}>
-                        <CIcon icon={isCollapsed ? cilChevronRight : cilChevronBottom} className="me-2" />
+                        <CIcon
+                          icon={isCollapsed ? cilChevronRight : cilChevronBottom}
+                          className="me-2"
+                        />
                         <strong>{moduleName}</strong>
                       </td>
                     </tr>
@@ -131,6 +143,20 @@ export default function PermissionMatrix({
                               cellPermissions.length > 0 &&
                               assignedCount === cellPermissions.length;
                             const someSelected = assignedCount > 0 && !allSelected;
+                            const canToggle =
+                              !readOnly && (allSelected ? canRemove : canAssign);
+                            const disabledTitle = readOnly
+                              ? "La matriz está en modo solo lectura"
+                              : isSaving
+                                ? "Guardando cambios"
+                                : allSelected && !canRemove
+                                  ? "No tienes autorización para retirar permisos"
+                                  : !allSelected && !canAssign
+                                    ? "No tienes autorización para asignar permisos"
+                                    : undefined;
+                            const permissionTitle = cellPermissions
+                              .map((permission) => `${permission.method} ${permission.url}`)
+                              .join("\n");
 
                             return (
                               <td key={action.key} className="text-center">
@@ -147,11 +173,19 @@ export default function PermissionMatrix({
                                   <MatrixCheckbox
                                     checked={allSelected}
                                     indeterminate={someSelected}
-                                    title={cellPermissions
-                                      .map((permission) => `${permission.method} ${permission.url}`)
-                                      .join("\n")}
+                                    title={
+                                      disabledTitle
+                                        ? `${permissionTitle}\n${disabledTitle}`
+                                        : permissionTitle
+                                    }
                                     ariaLabel={`Permisos de ${row.resource} para ${action.label}`}
-                                    onChange={() => onToggleCell(cellPermissionIds)}
+                                    onChange={() => {
+                                      if (readOnly || isSaving || !canToggle) {
+                                        return;
+                                      }
+                                      onToggleCell(cellPermissionIds);
+                                    }}
+                                    disabled={readOnly || isSaving || !canToggle}
                                   />
                                 )}
                               </td>

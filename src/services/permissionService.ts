@@ -1,16 +1,20 @@
+
 import { Permission } from "../models/Permission";
 import { Role } from "../models/Role";
 import { apiClient } from "./apiClient";
-import { IPermissionService, RolePermissionSaveResult } from "./interfaces/IPermissionService";
+import {
+  IPermissionService,
+  RolePermissionSaveResult,
+} from "./interfaces/IPermissionService";
 
 export class PermissionService implements IPermissionService {
-  getRolesByPermission(permissionId: number): Promise<Role[] | null> {
-    throw new Error("Method not implemented.");
-  }
   async getAll(): Promise<Permission[] | null> {
     try {
       const data = await apiClient.get("/permissions");
-      return Array.isArray(data) ? data.map((p: any) => new Permission(p)) : null;
+
+      return Array.isArray(data)
+        ? data.map((permission: any) => new Permission(permission))
+        : null;
     } catch (error) {
       console.error(error);
       return null;
@@ -37,7 +41,10 @@ export class PermissionService implements IPermissionService {
     }
   }
 
-  async update(id: number, permission: Permission): Promise<Permission | null> {
+  async update(
+    id: number,
+    permission: Permission,
+  ): Promise<Permission | null> {
     try {
       const data = await apiClient.put(`/permissions/${id}`, permission);
       return new Permission(data);
@@ -59,7 +66,10 @@ export class PermissionService implements IPermissionService {
 
   async getByRole(roleId: number): Promise<Permission[] | null> {
     try {
-      const data = await apiClient.get(`/role-permissions/roles/${roleId}`);
+      const data = await apiClient.get(
+        `/role-permissions/roles/${roleId}`,
+      );
+
       return Array.isArray(data)
         ? data
             .map((rolePermission: any) => rolePermission.permission)
@@ -72,37 +82,45 @@ export class PermissionService implements IPermissionService {
     }
   }
 
-  private async assignPermission(roleId: number, permissionId: number): Promise<number> {
-    await apiClient.post("/role-permissions", { roleId, permissionId });
-    return permissionId;
-  }
-
-  private async removePermission(roleId: number, permissionId: number): Promise<number> {
-    await apiClient.delete(`/role-permissions/${roleId}/${permissionId}`);
-    return permissionId;
-  }
-
-  /**
-   * @deprecated Usar saveRolePermissions para conocer el resultado por permiso.
-   */
-  async assignToRole(roleId: number, permissionIds: number[]): Promise<boolean | null> {
+  async getRolesByPermission(permissionId: number): Promise<Role[] | null> {
     try {
-      await apiClient.post(`/roles/${roleId}/permissions`, { permissionIds });
-      return true;
+      const data = await apiClient.get(
+        `/role-permissions/permissions/${permissionId}`,
+      );
+
+      return Array.isArray(data)
+        ? data
+            .map((permissionRole: any) => permissionRole.role)
+            .filter((role: any) => Boolean(role))
+            .map((role: any) => new Role(role))
+        : null;
     } catch (error) {
       console.error(error);
       return null;
     }
   }
 
-  async removeFromRole(roleId: number, permissionId: number): Promise<boolean | null> {
-    try {
-      await apiClient.delete(`/roles/${roleId}/permissions/${permissionId}`);
-      return true;
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
+  private async assignPermission(
+    roleId: number,
+    permissionId: number,
+  ): Promise<number> {
+    await apiClient.post("/role-permissions", {
+      roleId,
+      permissionId,
+    });
+
+    return permissionId;
+  }
+
+  private async removePermission(
+    roleId: number,
+    permissionId: number,
+  ): Promise<number> {
+    await apiClient.delete(
+      `/role-permissions/${roleId}/${permissionId}`,
+    );
+
+    return permissionId;
   }
 
   async saveRolePermissions(
@@ -111,23 +129,41 @@ export class PermissionService implements IPermissionService {
     removeIds: number[],
   ): Promise<RolePermissionSaveResult | null> {
     try {
-      const uniqueAddIds = Array.from(new Set(addIds)).filter((id) => !removeIds.includes(id));
-      const uniqueRemoveIds = Array.from(new Set(removeIds)).filter((id) => !addIds.includes(id));
+      const uniqueAddIds = Array.from(new Set(addIds)).filter(
+        (id) => !removeIds.includes(id),
+      );
+
+      const uniqueRemoveIds = Array.from(new Set(removeIds)).filter(
+        (id) => !addIds.includes(id),
+      );
 
       const [addResults, removeResults] = await Promise.all([
         Promise.allSettled(
-          uniqueAddIds.map((permissionId) => this.assignPermission(roleId, permissionId)),
+          uniqueAddIds.map((permissionId) =>
+            this.assignPermission(roleId, permissionId),
+          ),
         ),
         Promise.allSettled(
-          uniqueRemoveIds.map((permissionId) => this.removePermission(roleId, permissionId)),
+          uniqueRemoveIds.map((permissionId) =>
+            this.removePermission(roleId, permissionId),
+          ),
         ),
       ]);
+
+      const forbiddenFailure = [...addResults, ...removeResults].find(
+        (response) => response.status === "rejected" && response.reason?.status === 403,
+      );
 
       const result: RolePermissionSaveResult = {
         addedIds: [],
         removedIds: [],
         failedAddIds: [],
         failedRemoveIds: [],
+        forbidden: forbiddenFailure?.status === "rejected",
+        message:
+          forbiddenFailure?.status === "rejected"
+            ? forbiddenFailure.reason?.message || null
+            : null,
       };
 
       addResults.forEach((response, index) => {

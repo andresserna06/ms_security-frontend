@@ -1,3 +1,4 @@
+
 import React from "react";
 import { User } from "../../models/User";
 import { UserRole } from "../../models/UserRole";
@@ -43,8 +44,8 @@ export default function UserDetailCard({
         <div className="card-header fw-semibold">Detalle del usuario</div>
         <div className="card-body text-center py-5 text-body-secondary">
           <p className="mb-0">
-            Selecciona un usuario de la tabla para consultar su información detallada y gestionar
-            su perfil, roles y estado.
+            Selecciona un usuario de la tabla para consultar su información
+            detallada y gestionar su perfil, roles y estado.
           </p>
         </div>
       </div>
@@ -66,11 +67,18 @@ export default function UserDetailCard({
     <div className="card h-100 shadow-sm">
       <div className="card-header d-flex justify-content-between align-items-center">
         <span className="fw-semibold">Detalle del usuario</span>
+
         <div className="d-flex align-items-center gap-2">
           {loadingDetail ? (
-            <div className="spinner-border spinner-border-sm text-primary" role="status" />
+            <div
+              className="spinner-border spinner-border-sm text-primary"
+              role="status"
+            />
           ) : null}
-          <span className="badge rounded-pill bg-info">ID: #{userDetail.id}</span>
+
+          <span className="badge rounded-pill bg-info">
+            ID: #{userDetail.id}
+          </span>
         </div>
       </div>
 
@@ -96,37 +104,57 @@ export default function UserDetailCard({
               <div className="text-body-secondary small">{userDetail.email}</div>
             </div>
           </div>
-          <span className={`badge rounded-pill ${isActive ? "bg-success" : "bg-secondary"}`}>
+
+          <span
+            className={`badge rounded-pill ${
+              isActive ? "bg-success" : "bg-secondary"
+            }`}
+          >
             {isActive ? "Activo" : "Inactivo"}
           </span>
         </div>
 
         <ul className="list-group list-group-flush border-top border-bottom mb-3">
           <li className="list-group-item d-flex justify-content-between px-0 py-2">
-            <span className="text-body-secondary small">Nombre completo</span>
-            <span className="fw-semibold small">{userDetail.name}</span>
-          </li>
-          <li className="list-group-item d-flex justify-content-between px-0 py-2">
-            <span className="text-body-secondary small">Correo electrónico</span>
-            <span className="fw-semibold small">{userDetail.email}</span>
-          </li>
-          <li className="list-group-item d-flex justify-content-between px-0 py-2">
-            <span className="text-body-secondary small">Teléfono (Perfil)</span>
+            <span className="text-body-secondary small">
+              Nombre completo
+            </span>
             <span className="fw-semibold small">
-              {profile?.phone ? (
-                profile.phone
-              ) : (
-                <span className="text-body-secondary fst-italic">Sin registrar</span>
+              {userDetail.name}
+            </span>
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between px-0 py-2">
+            <span className="text-body-secondary small">
+              Correo electrónico
+            </span>
+            <span className="fw-semibold small">
+              {userDetail.email}
+            </span>
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between px-0 py-2">
+            <span className="text-body-secondary small">
+              Teléfono (Perfil)
+            </span>
+            <span className="fw-semibold small">
+              {profile?.phone || (
+                <span className="text-body-secondary fst-italic">
+                  Sin registrar
+                </span>
               )}
             </span>
           </li>
+
           <li className="list-group-item d-flex justify-content-between px-0 py-2">
-            <span className="text-body-secondary small">Fecha de nacimiento</span>
+            <span className="text-body-secondary small">
+              Fecha de nacimiento
+            </span>
             <span className="fw-semibold small">
-              {profile?.birthDate ? (
-                profile.birthDate
-              ) : (
-                <span className="text-body-secondary fst-italic">Sin registrar</span>
+              {profile?.birthDate || (
+                <span className="text-body-secondary fst-italic">
+                  Sin registrar
+                </span>
               )}
             </span>
           </li>
@@ -158,6 +186,7 @@ export default function UserDetailCard({
               Roles asociados ({roles.length})
             </span>
           </div>
+
           {roles.length === 0 ? (
             <div className="text-body-secondary small fst-italic">
               Este usuario aún no tiene roles asignados.
@@ -185,6 +214,7 @@ export default function UserDetailCard({
               onClick={() => onEditUser(userDetail)}
             />
           </div>
+
           <div className="col-6">
             <GenericButton
               label="Gestionar Perfil"
@@ -193,6 +223,7 @@ export default function UserDetailCard({
               onClick={() => onManageProfile(userDetail)}
             />
           </div>
+
           <div className="col-6">
             <GenericButton
               label="Gestionar Roles"
@@ -201,6 +232,7 @@ export default function UserDetailCard({
               onClick={() => onManageRoles(userDetail)}
             />
           </div>
+
           <div className="col-6">
             <GenericButton
               label={isActive ? "Desactivar" : "Activar"}
@@ -209,6 +241,7 @@ export default function UserDetailCard({
               onClick={() => onToggleStatus(userDetail)}
             />
           </div>
+
           <div className="col-6">
             <GenericButton
               label="Eliminar"

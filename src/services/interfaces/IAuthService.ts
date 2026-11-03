@@ -16,7 +16,11 @@ export interface IAuthService {
   verify2Fa(email: string, code: string): Promise<Session>;
   loginGoogle(idToken: string, email?: string): Promise<Session>;
   loginAzure(idToken: string, email?: string): Promise<Session>;
-  loginWithProvider(provider: OAuthProviderType, idToken: string, email?: string): Promise<Session>;
+  loginWithProvider(
+    provider: OAuthProviderType,
+    credential: string,
+    email?: string,
+  ): Promise<Session>;
   forgotPassword(email: string): Promise<{ message: string }>;
   resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
   logout(): Promise<void>;
@@ -28,6 +32,10 @@ export interface IAuthService {
   getUserAvatar(): string;
   getAuthProvider(): string;
   getCurrentUser(): AuthUserInfo | null;
+  getPermissions(): string[];
+  getRoles(): string[];
+  hasPermission(method: string, url: string): boolean;
+  isAdmin(): boolean;
   isAuthenticated(): boolean;
   clearSession(): void;
 }

@@ -12,7 +12,12 @@ import Loader from "../../components/common/Loader";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import PermissionMatrix from "../../components/permissions/PermissionMatrix";
 import RoleSummaryPanel from "../../components/permissions/RoleSummaryPanel";
-import { buildMatrixGroups, countModulesWithAccess } from "../../utils/permissionMatrix";
+import {
+  buildMatrixGroups,
+  countModulesWithAccess,
+  isSupportedEndpointPermission,
+} from "../../utils/permissionMatrix";
+import authService from "../../services/authService";
 
 interface RolePermissionsProps {
   roleService: IRoleService;
@@ -27,7 +32,20 @@ interface Feedback {
 const INFO_MESSAGE =
   "Los permisos seleccionados se conservarán después de cerrar e iniciar sesión nuevamente.";
 
+const READ_ONLY_MESSAGE =
+  "No tienes permisos para modificar este rol. La matriz está en modo solo lectura.";
+
+const normalizeRoleName = (name: string) =>
+  name.replace(/^ROLE_/i, "").trim().toLowerCase();
+
 export default function RolePermissions({ roleService, permissionService }: RolePermissionsProps) {
+  const isAdmin = authService.isAdmin();
+  const canAssign =
+    isAdmin && authService.hasPermission("POST", "/api/role-permissions");
+  const canRemove =
+    isAdmin && authService.hasPermission("DELETE", "/api/role-permissions/1/1");
+  const canEdit = canAssign || canRemove;
+
   const [roles, setRoles] = useState<Role[] | null>(null);
   const [allPermissions, setAllPermissions] = useState<Permission[] | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
@@ -133,18 +151,23 @@ export default function RolePermissions({ roleService, permissionService }: Role
     };
   }, [selectedRoleId, permissionService, assignedReloadKey]);
 
-  const selectedRole = roles?.find((role) => String(role.id) === selectedRoleId) ?? null;
+  const visibleRoles = useMemo(() => {
+    if (roles === null) return null;
+    if (isAdmin) return roles;
+
+    const ownRoleNames = new Set(authService.getRoles().map(normalizeRoleName));
+    return roles.filter((role) => ownRoleNames.has(normalizeRoleName(role.name)));
+  }, [roles, isAdmin]);
+
+  const selectedRole =
+    visibleRoles?.find((role) => String(role.id) === selectedRoleId) ?? null;
   const selectedRoleNumber = selectedRoleId ? Number(selectedRoleId) : null;
-  const isCatalogReady = roles !== null && allPermissions !== null;
-  const isAssignedReady =
-    selectedRoleNumber !== null && loadedRoleId === selectedRoleNumber;
+  const isCatalogReady = visibleRoles !== null && allPermissions !== null;
+  const isAssignedReady = selectedRoleNumber !== null && loadedRoleId === selectedRoleNumber;
 
-  const matrixGroups = useMemo(
-    () => buildMatrixGroups(allPermissions ?? []),
-    [allPermissions],
-  );
+  const matrixGroups = useMemo(() => buildMatrixGroups(allPermissions ?? []), [allPermissions]);
 
-  const totalAvailable = allPermissions?.length ?? 0;
+  const totalAvailable = allPermissions?.filter(isSupportedEndpointPermission).length ?? 0;
   const modulesWithAccess = useMemo(
     () => countModulesWithAccess(matrixGroups, assignedIds),
     [matrixGroups, assignedIds],
@@ -173,6 +196,13 @@ export default function RolePermissions({ roleService, permissionService }: Role
   const handleSelectRole = (roleId: string) => {
     if (roleId === selectedRoleId) return;
 
+    if (
+      roleId &&
+      !visibleRoles?.some((role) => String(role.id) === roleId)
+    ) {
+      return;
+    }
+
     if (isDirty) {
       setPendingRoleId(roleId);
       setConfirmVisible(true);
@@ -196,14 +226,24 @@ export default function RolePermissions({ roleService, permissionService }: Role
   };
 
   const handleToggleCell = (permissionIds: number[]) => {
-    if (permissionIds.length === 0) return;
+    if (!canEdit || permissionIds.length === 0) return;
+
+    const allAssigned = permissionIds.every((permissionId) =>
+      assignedIds.has(permissionId),
+    );
+
+    if ((allAssigned && !canRemove) || (!allAssigned && !canAssign)) {
+      return;
+    }
 
     setAssignedIds((prev) => {
       const next = new Set(prev);
-      const allAssigned = permissionIds.every((permissionId) => prev.has(permissionId));
+      const cellFullyAssigned = permissionIds.every((permissionId) =>
+        prev.has(permissionId),
+      );
 
       permissionIds.forEach((permissionId) => {
-        if (allAssigned) {
+        if (cellFullyAssigned) {
           next.delete(permissionId);
         } else {
           next.add(permissionId);
@@ -216,7 +256,7 @@ export default function RolePermissions({ roleService, permissionService }: Role
   };
 
   const handleReset = () => {
-    if (!isAssignedReady) return;
+    if (!canEdit || !isAssignedReady) return;
     setAssignedIds(new Set(initialAssigned));
     setFeedback(null);
   };
@@ -242,11 +282,19 @@ export default function RolePermissions({ roleService, permissionService }: Role
   };
 
   const handleSave = async () => {
-    if (!isAssignedReady || isSaving) return;
+    if (!canEdit || !isAssignedReady || isSaving) return;
 
     const roleId = Number(selectedRoleId);
     const toAdd = Array.from(assignedIds).filter((id) => !initialAssigned.has(id));
     const toRemove = Array.from(initialAssigned).filter((id) => !assignedIds.has(id));
+
+    if ((toAdd.length > 0 && !canAssign) || (toRemove.length > 0 && !canRemove)) {
+      setFeedback({
+        type: "danger",
+        message: "No tienes autorización para realizar todos los cambios seleccionados.",
+      });
+      return;
+    }
 
     if (toAdd.length === 0 && toRemove.length === 0) {
       setFeedback({ type: "info", message: "No hay cambios para guardar." });
@@ -262,6 +310,15 @@ export default function RolePermissions({ roleService, permissionService }: Role
 
       if (result === null) {
         setFeedback({ type: "danger", message: "No fue posible guardar los cambios." });
+        return;
+      }
+
+      if (result.forbidden) {
+        setFeedback({
+          type: "danger",
+          message: result.message || READ_ONLY_MESSAGE,
+        });
+        setAssignedReloadKey((key) => key + 1);
         return;
       }
 
@@ -330,6 +387,10 @@ export default function RolePermissions({ roleService, permissionService }: Role
         groups={matrixGroups}
         selectedPermissionIds={assignedIds}
         onToggleCell={handleToggleCell}
+        canAssign={canAssign}
+        canRemove={canRemove}
+        isSaving={isSaving}
+        readOnly={!canEdit}
       />
     );
   }
@@ -348,7 +409,8 @@ export default function RolePermissions({ roleService, permissionService }: Role
             <div>
               <h2 className="mb-0 text-body">Asignar Permisos a Roles</h2>
               <div className="text-body-secondary">
-                Administra de manera centralizada los permisos que puede ejecutar cada rol del sistema.
+                Administra de manera centralizada los permisos que puede ejecutar cada rol del
+                sistema.
               </div>
             </div>
           </div>
@@ -367,9 +429,16 @@ export default function RolePermissions({ roleService, permissionService }: Role
             </div>
           ) : null}
 
-          {roles && roles.length === 0 ? (
+          {visibleRoles && visibleRoles.length === 0 ? (
             <div className="mb-3">
-              <Alert type="info" message="No hay roles registrados en el sistema." />
+              <Alert
+                type="info"
+                message={
+                  isAdmin
+                    ? "No hay roles registrados en el sistema."
+                    : "No tienes roles asignados para consultar."
+                }
+              />
             </div>
           ) : null}
 
@@ -384,29 +453,33 @@ export default function RolePermissions({ roleService, permissionService }: Role
                     !isCatalogReady ||
                     isLoadingAssigned ||
                     isSaving ||
-                    (roles?.length ?? 0) === 0
+                    (visibleRoles?.length ?? 0) === 0
                   }
                 >
                   <option value="">Seleccione un rol</option>
-                  {roles?.map((role) => (
+                  {visibleRoles?.map((role) => (
                     <option key={role.id} value={String(role.id)}>
                       {role.name}
                     </option>
                   ))}
                 </CFormSelect>
               </div>
-              <GenericButton
-                label="Guardar cambios"
-                variant="success"
-                onClick={handleSave}
-                disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
-              />
-              <GenericButton
-                label="Restablecer"
-                variant="outline-warning"
-                onClick={handleReset}
-                disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
-              />
+              {canEdit && (
+                <>
+                  <GenericButton
+                    label="Guardar cambios"
+                    variant="success"
+                    onClick={handleSave}
+                    disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
+                  />
+                  <GenericButton
+                    label="Restablecer"
+                    variant="outline-warning"
+                    onClick={handleReset}
+                    disabled={!isAssignedReady || !isDirty || isSaving || isLoadingAssigned}
+                  />
+                </>
+              )}
             </CCardBody>
           </CCard>
 
@@ -421,7 +494,10 @@ export default function RolePermissions({ roleService, permissionService }: Role
           ) : null}
 
           <div className="mb-3">
-            <Alert type="info" message={INFO_MESSAGE} />
+            <Alert
+              type={canEdit ? "info" : "warning"}
+              message={canEdit ? INFO_MESSAGE : READ_ONLY_MESSAGE}
+            />
           </div>
 
           {content}

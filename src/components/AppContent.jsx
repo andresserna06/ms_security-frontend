@@ -2,8 +2,11 @@ import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { CContainer, CSpinner } from '@coreui/react'
 
-// routes config
+// Routes config
 import { routes } from '../routes'
+import authService from '../services/authService'
+import { canAccessRoute } from '../utils/routeAccess'
+import NoAccess from './NoAccess'
 
 const AppContent = ({ roleService, permissionService, userService, profileService }) => {
   return (
@@ -12,6 +15,9 @@ const AppContent = ({ roleService, permissionService, userService, profileServic
         <Routes>
           {routes.map((route, idx) => {
             const RouteElement = route.element
+
+            const allowed = canAccessRoute(route, authService)
+
             return (
               route.element && (
                 <Route
@@ -20,17 +26,22 @@ const AppContent = ({ roleService, permissionService, userService, profileServic
                   exact={route.exact}
                   name={route.name}
                   element={
-                    <RouteElement
-                      roleService={roleService}
-                      permissionService={permissionService}
-                      userService={userService}
-                      profileService={profileService}
-                    />
+                    allowed ? (
+                      <RouteElement
+                        roleService={roleService}
+                        permissionService={permissionService}
+                        userService={userService}
+                        profileService={profileService}
+                      />
+                    ) : (
+                      <NoAccess />
+                    )
                   }
                 />
               )
             )
           })}
+
           <Route path="/" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </Suspense>

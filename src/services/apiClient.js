@@ -12,17 +12,17 @@ const parseResponse = async (response) => {
 
   if (!response.ok) {
     // TODO: Descomentar cuando todos los servicios envíen el token JWT en sus headers
-    // const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
-    // if (response.status === 401 && !isAuthEndpoint) {
-    //   localStorage.removeItem('accessToken')
-    //   localStorage.removeItem('token')
-    //   localStorage.removeItem('tokenType')
-    //   localStorage.removeItem('tokenExpiresAt')
-    //   localStorage.removeItem('userEmail')
-    //   if (!window.location.hash.includes('/login')) {
-    //     window.location.hash = '#/login'
-    //   }
-    // }
+    const isAuthEndpoint = response.url && response.url.includes('/api/auth/')
+    if (response.status === 401 && !isAuthEndpoint) {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('tokenType')
+      localStorage.removeItem('tokenExpiresAt')
+      localStorage.removeItem('userEmail')
+      if (!window.location.hash.includes('/login')) {
+        window.location.hash = '#/login'
+      }
+    }
 
     let errorMessage = 'Error al procesar la solicitud en el servidor'
     let fieldErrors = null

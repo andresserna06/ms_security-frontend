@@ -1,3 +1,4 @@
+import { authFetch } from "./authFetch";
 import { User } from "../models/User";
 import { IUserService } from "./interfaces/IUserService";
 
@@ -8,7 +9,7 @@ export class UserService implements IUserService {
 
   async getAll(): Promise<User[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}`);
       if (!response.ok) throw new Error("Error fetching users");
       const data = await response.json();
       return Array.isArray(data) ? data.map((u: any) => new User(u)) : null;
@@ -20,7 +21,7 @@ export class UserService implements IUserService {
 
   async getById(id: number): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`);
       if (!response.ok) throw new Error("Error fetching user");
       const data = await response.json();
       return new User(data);
@@ -32,7 +33,7 @@ export class UserService implements IUserService {
 
   async getDetailWithProfile(id: number): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}/detail`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/detail`);
       if (!response.ok) throw new Error("Error fetching user detail with profile");
       const data = await response.json();
       return new User(data);
@@ -44,7 +45,7 @@ export class UserService implements IUserService {
 
   async getDetailWithRoles(id: number): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}/detail-with-roles`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/detail-with-roles`);
       if (!response.ok) throw new Error("Error fetching user detail with roles");
       const data = await response.json();
       return new User(data);
@@ -56,7 +57,7 @@ export class UserService implements IUserService {
 
   async create(user: User): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user),
@@ -72,7 +73,7 @@ export class UserService implements IUserService {
 
   async update(id: number, user: User): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user),
@@ -88,7 +89,7 @@ export class UserService implements IUserService {
 
   async activate(id: number): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}/activate`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/activate`, {
         method: "PATCH",
       });
       if (!response.ok) throw new Error("Error activating user");
@@ -102,7 +103,7 @@ export class UserService implements IUserService {
 
   async deactivate(id: number): Promise<User | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}/deactivate`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/deactivate`, {
         method: "PATCH",
       });
       if (!response.ok) throw new Error("Error deactivating user");
@@ -116,7 +117,7 @@ export class UserService implements IUserService {
 
   async remove(id: number): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Error deleting user");

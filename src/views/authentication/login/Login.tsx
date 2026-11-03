@@ -18,11 +18,14 @@ import {
   CTooltip,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
+import { cibGithub } from "@coreui/icons";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { apple } from "../../../assets/brand/apple";
 import { eye } from "../../../assets/icons/eye";
 import { IAuthService } from "../../../services/interfaces/IAuthService";
-import { IOAuthProviderService } from "../../../services/interfaces/IOAuthProviderService";
+import {
+  IOAuthProviderService,
+  IRedirectOAuthProviderService,
+} from "../../../services/interfaces/IOAuthProviderService";
 import { serviceContainer } from "../../../services/serviceContainer";
 import jpaSports from "../../../assets/images/JPASports.jpg";
 
@@ -30,6 +33,7 @@ export interface LoginProps {
   authService?: IAuthService;
   oauthProvider?: IOAuthProviderService;
   azureOAuthProvider?: IOAuthProviderService;
+  githubOAuthProvider?: IRedirectOAuthProviderService;
 }
 
 type AuthStep = "CREDENTIALS" | "2FA";
@@ -37,6 +41,7 @@ type AuthStep = "CREDENTIALS" | "2FA";
 export default function Login({
   authService = serviceContainer.authService,
   oauthProvider = serviceContainer.googleOAuthProvider,
+  githubOAuthProvider = serviceContainer.githubOAuthProvider,
   azureOAuthProvider = serviceContainer.azureOAuthProvider,
 }: LoginProps) {
   const navigate = useNavigate();
@@ -151,6 +156,24 @@ export default function Login({
 
   const handleGoogleError = () => {
     setError("El inicio de sesión con Google fue cancelado o falló.");
+  };
+
+  // Inicio de sesión con GitHub mediante authorization code flow
+  const handleGithubLogin = () => {
+    setError("");
+    setInfoMessage("");
+
+    try {
+      const state =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      sessionStorage.setItem("github_oauth_state", state);
+      window.location.assign(githubOAuthProvider.getAuthorizationUrl(state));
+    } catch (err: any) {
+      setError(err?.message || "No fue posible iniciar sesión con GitHub.");
+    }
   };
 
   const handleAzureLogin = async () => {
@@ -426,6 +449,36 @@ export default function Login({
                               <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                             </svg>
                             <span>Microsoft</span>
+                          </button>
+                        </CCol>
+                        <CCol xs={12}>
+                          <button
+                            type="button"
+                            className="btn w-100 d-flex align-items-center justify-content-center"
+                            style={{
+                              height: "40px",
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #dadce0",
+                              borderRadius: "4px",
+                              color: "#3c4043",
+                              fontSize: "14px",
+                              fontWeight: 500,
+                              boxShadow: "0 1px 2px rgba(60,64,67,0.08)",
+                              transition: "background-color .2s, border-color .2s, box-shadow .2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f8f9fa";
+                              e.currentTarget.style.borderColor = "#c6c9cc";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#ffffff";
+                              e.currentTarget.style.borderColor = "#dadce0";
+                            }}
+                            onClick={handleGithubLogin}
+                            disabled={loading}
+                          >
+                            <CIcon icon={cibGithub} className="me-2" />
+                            <span>GitHub</span>
                           </button>
                         </CCol>
                       </CRow>

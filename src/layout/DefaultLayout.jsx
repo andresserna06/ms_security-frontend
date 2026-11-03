@@ -20,7 +20,6 @@
  */
 
 import React from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
 import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
 import { serviceContainer } from '../services/serviceContainer'
 
@@ -44,13 +43,6 @@ const DefaultLayout = ({
   userService = serviceContainer.userService,
   profileService = serviceContainer.profileService,
 }) => {
-  const location = useLocation()
-
-  // TODO: Descomentar cuando los demás módulos (users, roles, permissions) envíen el token en sus servicios
-  // if (!authService.isAuthenticated()) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />
-  // }
-
   return (
     <div>
       <AppSidebar />

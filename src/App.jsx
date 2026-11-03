@@ -20,6 +20,7 @@ import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import { serviceContainer } from './services/serviceContainer'
+import RequireAuth from './guards/RequireAuth'
 import './scss/style.scss'
 
 // We use those styles to show code examples, you should remove them in your application.
@@ -31,6 +32,7 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 // Pages
 const Login = React.lazy(() => import('./views/authentication/login/Login'))
 const Register = React.lazy(() => import('./views/authentication/register/Register'))
+const GithubCallback = React.lazy(() => import('./views/authentication/oauth/GithubCallback'))
 const ForgotPassword = React.lazy(() => import('./views/authentication/forgot-password/ForgotPassword'))
 const ResetPassword = React.lazy(() => import('./views/authentication/reset-password/ResetPassword'))
 const Page404 = React.lazy(() => import('./views/error-pages/page404/Page404'))
@@ -62,6 +64,7 @@ const App = ({
   authService = serviceContainer.authService,
   googleOAuthProvider = serviceContainer.googleOAuthProvider,
   azureOAuthProvider = serviceContainer.azureOAuthProvider,
+  githubOAuthProvider = serviceContainer.githubOAuthProvider,
   roleService = serviceContainer.roleService,
   permissionService = serviceContainer.permissionService,
   userService = serviceContainer.userService,
@@ -98,13 +101,33 @@ const App = ({
             exact
             path="/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} azureOAuthProvider={azureOAuthProvider} />}
+            element={
+              <Login
+                authService={authService}
+                oauthProvider={googleOAuthProvider}
+                azureOAuthProvider={azureOAuthProvider}
+                githubOAuthProvider={githubOAuthProvider}
+              />
+            }
           />
           <Route
             exact
             path="/authentication/login"
             name="Login Page"
-            element={<Login authService={authService} oauthProvider={googleOAuthProvider} azureOAuthProvider={azureOAuthProvider} />}
+            element={
+              <Login
+                authService={authService}
+                oauthProvider={googleOAuthProvider}
+                azureOAuthProvider={azureOAuthProvider}
+                githubOAuthProvider={githubOAuthProvider}
+              />
+            }
+          />
+          <Route
+            exact
+            path="/authentication/oauth/github/callback"
+            name="GitHub OAuth Callback"
+            element={<GithubCallback authService={authService} />}
           />
           <Route
             exact
@@ -130,13 +153,15 @@ const App = ({
             path="*"
             name="Home"
             element={
-              <DefaultLayout
-                authService={authService}
-                roleService={roleService}
-                permissionService={permissionService}
-                userService={userService}
-                profileService={profileService}
-              />
+              <RequireAuth authService={authService}>
+                <DefaultLayout
+                  authService={authService}
+                  roleService={roleService}
+                  permissionService={permissionService}
+                  userService={userService}
+                  profileService={profileService}
+                />
+              </RequireAuth>
             }
           />
         </Routes>

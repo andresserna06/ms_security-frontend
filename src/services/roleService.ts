@@ -1,3 +1,4 @@
+import { authFetch } from "./authFetch";
 import { Role } from "../models/Role";
 import { IRoleService } from "./interfaces/IRoleService";
 
@@ -8,7 +9,7 @@ export class RoleService implements IRoleService {
 
   async getAll(): Promise<Role[] | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}`);
       if (!response.ok) throw new Error("Error fetching roles");
       const data = await response.json();
       return Array.isArray(data) ? data.map((r: any) => new Role(r)) : null;
@@ -20,7 +21,7 @@ export class RoleService implements IRoleService {
 
   async getById(id: number): Promise<Role | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`);
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`);
       if (!response.ok) throw new Error("Error fetching role");
       const data = await response.json();
       return new Role(data);
@@ -32,7 +33,7 @@ export class RoleService implements IRoleService {
 
   async create(role: Role): Promise<Role | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(role),
@@ -48,7 +49,7 @@ export class RoleService implements IRoleService {
 
   async update(id: number, role: Role): Promise<Role | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(role),
@@ -64,7 +65,7 @@ export class RoleService implements IRoleService {
 
   async remove(id: number): Promise<boolean | null> {
     try {
-      const response = await fetch(`${BASE_URL}${this.endpoint}/${id}`, {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Error deleting role");

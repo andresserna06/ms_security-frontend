@@ -9,6 +9,7 @@ import Alert from "../../components/common/Alert";
 import Loader from "../../components/common/Loader";
 import PermissionForm from "./PermissionForm";
 import { getPermissionResourceLabel } from "../../utils/permissionMatrix";
+import authService from "../../services/authService";
 
 interface PermissionsProps {
   permissionService: IPermissionService;
@@ -194,28 +195,42 @@ export default function Permissions({ permissionService }: PermissionsProps) {
   ];
 
   const actions: TableAction<Permission>[] = [
-    {
-      label: "Detalle",
-      variant: "outline-info",
-      onClick: (permission: Permission) => openDetailModal(permission),
-    },
-    {
-      label: "Editar",
-      variant: "outline-secondary",
-      onClick: (permission: Permission) => openEditModal(permission),
-    },
-    {
-      label: "Eliminar",
-      variant: "outline-danger",
-      onClick: (permission: Permission) => openDeleteModal(permission),
-    },
+    ...(authService.hasPermission("GET", "/api/permissions/1")
+      ? [
+          {
+            label: "Detalle",
+            variant: "outline-info",
+            onClick: (permission: Permission) => openDetailModal(permission),
+          } as TableAction<Permission>,
+        ]
+      : []),
+    ...(authService.hasPermission("PUT", "/api/permissions/1")
+      ? [
+          {
+            label: "Editar",
+            variant: "outline-secondary",
+            onClick: (permission: Permission) => openEditModal(permission),
+          } as TableAction<Permission>,
+        ]
+      : []),
+    ...(authService.hasPermission("DELETE", "/api/permissions/1")
+      ? [
+          {
+            label: "Eliminar",
+            variant: "outline-danger",
+            onClick: (permission: Permission) => openDeleteModal(permission),
+          } as TableAction<Permission>,
+        ]
+      : []),
   ];
 
   return (
     <div className="container-fluid mt-3">
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h2 className="mb-0">Gestión de Permisos</h2>
-        <GenericButton label="Nuevo Permiso" variant="primary" onClick={openCreateModal} />
+        {authService.hasPermission("POST", "/api/permissions") && (
+          <GenericButton label="Nuevo Permiso" variant="primary" onClick={openCreateModal} />
+        )}
       </div>
 
       {error ? <Alert type="danger" message={error} onClose={() => setError(null)} /> : null}
@@ -227,7 +242,7 @@ export default function Permissions({ permissionService }: PermissionsProps) {
         <GenericTable<Permission>
           data={permissions}
           columns={columns}
-          actions={actions}
+          actions={actions.length > 0 ? actions : undefined}
           getKey={(permission) => permission.id}
           isLoading={false}
           emptyMessage="No hay permisos registrados"
@@ -263,53 +278,33 @@ export default function Permissions({ permissionService }: PermissionsProps) {
           <>
             {detailError ? <Alert type="danger" message={detailError} /> : null}
 
-            {detailPermission ? (
-              <>
-                <dl className="row mb-3">
-                  <dt className="col-sm-4">ID</dt>
-                  <dd className="col-sm-8">{detailPermission.id}</dd>
-
-                  <dt className="col-sm-4">Módulo</dt>
-                  <dd className="col-sm-8">{getPermissionResourceLabel(detailPermission)}</dd>
-
-                  <dt className="col-sm-4">Método</dt>
-                  <dd className="col-sm-8" translate="no">
-                    {detailPermission.method}
-                  </dd>
-
-                  <dt className="col-sm-4">URL</dt>
-                  <dd className="col-sm-8">{detailPermission.url}</dd>
-                </dl>
-
-                <h6>Roles asociados</h6>
-                {detailRoles && detailRoles.length > 0 ? (
-                  <ul className="list-group mb-3">
-                    {detailRoles.map((role) => (
-                      <li key={role.id} className="list-group-item">
-                        <strong>{role.name}</strong>
-                        <div className="text-body-secondary small">{role.description}</div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : detailRoles && detailRoles.length === 0 ? (
-                  <Alert type="info" message="Este permiso no está asignado a ningún rol." />
-                ) : null}
-              </>
-            ) : null}
+            {detailPermission &&
+  authService.hasPermission("PUT", "/api/permissions/1") && (
+    <GenericButton
+      label="Editar"
+      variant="warning"
+      onClick={() => {
+        closeDetailModal();
+        openEditModal(detailPermission);
+      }}
+    />
+  )}
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-              <GenericButton label="Cerrar" variant="secondary" onClick={closeDetailModal} />
-              {detailPermission ? (
-                <GenericButton
-                  label="Editar"
-                  variant="warning"
-                  onClick={() => {
-                    closeDetailModal();
-                    openEditModal(detailPermission);
-                  }}
-                />
-              ) : null}
-            </div>
+  <GenericButton label="Cerrar" variant="secondary" onClick={closeDetailModal} />
+
+  {detailPermission &&
+    authService.hasPermission("PUT", "/api/permissions/1") && (
+      <GenericButton
+        label="Editar"
+        variant="warning"
+        onClick={() => {
+          closeDetailModal();
+          openEditModal(detailPermission);
+        }}
+      />
+    )}
+</div>
           </>
         )}
       </GenericModal>

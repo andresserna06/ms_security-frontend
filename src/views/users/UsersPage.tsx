@@ -13,6 +13,7 @@ import UserDetailCard from "./UserDetailCard";
 import UserFormModal from "./UserFormModal";
 import UserProfileModal from "./UserProfileModal";
 import UserRolesModal from "./UserRolesModal";
+import authService from "../../services/authService";
 
 export interface UsersPageProps {
   userService?: IUserService;
@@ -307,10 +308,10 @@ export default function UsersPage({
             onClick={() => fetchUsers(true)}
           />
           <GenericButton
-            label="Nuevo usuario"
-            variant="primary"
-            onClick={() => handleOpenCreateModal()}
-          />
+  label="Nuevo usuario"
+  variant="primary"
+  onClick={handleOpenCreateModal}
+/>
         </div>
       </div>
 

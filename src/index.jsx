@@ -31,6 +31,7 @@ if (!isMsalPopup) {
           authService={serviceContainer.authService}
           googleOAuthProvider={serviceContainer.googleOAuthProvider}
           azureOAuthProvider={serviceContainer.azureOAuthProvider}
+          githubOAuthProvider={serviceContainer.githubOAuthProvider}
           roleService={serviceContainer.roleService}
           permissionService={serviceContainer.permissionService}
           userService={serviceContainer.userService}

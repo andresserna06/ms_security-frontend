@@ -19,10 +19,7 @@ export interface RolePermissionSummary {
 
 export const ACTION_KEYS: ActionKey[] = ["ver", "listar", "crear", "actualizar", "eliminar"];
 
-export function buildRolePermissionSummary(
-  total: number,
-  assigned: number,
-): RolePermissionSummary {
+export function buildRolePermissionSummary(total: number, assigned: number): RolePermissionSummary {
   const safeTotal = Math.max(0, total);
   const safeAssigned = Math.max(0, assigned);
 
@@ -35,12 +32,28 @@ export function buildRolePermissionSummary(
 }
 
 const MODULE_GROUPS: Record<string, string[]> = {
-  "Administración": ["User", "Profile", "Session", "Role", "UserRole", "Permission", "RolePermission"],
+  Administración: [
+    "User",
+    "Profile",
+    "Session",
+    "Role",
+    "UserRole",
+    "Permission",
+    "RolePermission",
+  ],
   "Gestión Deportiva": ["Tournament", "Team", "Player", "Match"],
-  "Comercial": ["Ticket", "Entry"],
-  "Infraestructura": ["Venue", "Scenario"],
-  "Reportes": ["Report"],
+  Comercial: ["Ticket", "Entry"],
+  Infraestructura: ["Venue", "Scenario"],
+  Reportes: ["Report"],
 };
+
+export const MODULE_NAMES = [...Object.keys(MODULE_GROUPS), "Otros"];
+
+const MODEL_TO_MODULE = new Map(
+  Object.entries(MODULE_GROUPS).flatMap(([moduleName, models]) =>
+    models.map((model) => [model, moduleName] as const),
+  ),
+);
 
 const RESOURCE_LABELS: Record<string, string> = {
   User: "Usuarios",
@@ -68,8 +81,10 @@ const URL_SEGMENT_TO_MODEL: Record<string, string> = {
   profiles: "Profile",
   sessions: "Session",
   roles: "Role",
-  "user-roles": "User",
+  "user-roles": "UserRole",
+  user: "User",
   permissions: "Permission",
+  permission: "Permission",
   "role-permissions": "RolePermission",
   tournaments: "Tournament",
   teams: "Team",
@@ -108,6 +123,14 @@ export function getPermissionModel(permission: Permission): string {
   return "Otro";
 }
 
+export function getPermissionModule(permission: Permission): string {
+  if (permission.module?.trim()) {
+    return permission.module.trim();
+  }
+
+  return MODEL_TO_MODULE.get(getPermissionModel(permission)) ?? "Otros";
+}
+
 export function getPermissionResourceLabel(permission: Permission): string {
   const model = getPermissionModel(permission);
   return RESOURCE_LABELS[model] ?? model;
@@ -117,8 +140,9 @@ function getAction(permission: Permission): ActionKey | null {
   const method = permission.method.toUpperCase();
 
   if (method === "GET") {
-    const isSingleResource = permission.url.includes("{") || /\/\d+$/.test(permission.url);
-    return isSingleResource ? "ver" : "listar";
+    return GET_LIST_ENDPOINTS.some((url) => matchesEndpointPattern(url, permission.url))
+      ? "listar"
+      : "ver";
   }
   if (method === "POST") return "crear";
   if (method === "PUT" || method === "PATCH") return "actualizar";
@@ -143,29 +167,112 @@ function buildRow(model: string, permissions: Permission[]): MatrixRow {
   return { resource: RESOURCE_LABELS[model] ?? model, model, permissionsByAction };
 }
 
+const ENDPOINTS = [
+  "GET /api/users",
+  "POST /api/users",
+  "GET /api/users/{id}",
+  "GET /api/users/{id}/detail",
+  "GET /api/users/{id}/detail-with-sessions",
+  "GET /api/users/{id}/detail-with-roles",
+  "PUT /api/users/{id}",
+  "PATCH /api/users/{id}/deactivate",
+  "PATCH /api/users/{id}/activate",
+  "DELETE /api/users/{id}",
+  "GET /api/users/{userId}/profile",
+  "POST /api/users/{userId}/profile",
+  "PUT /api/users/{userId}/profile",
+  "DELETE /api/users/{userId}/profile",
+  "GET /api/users/{userId}/sessions",
+  "POST /api/users/{userId}/sessions",
+  "GET /api/users/{userId}/sessions/{sessionId}",
+  "PUT /api/users/{userId}/sessions/{sessionId}",
+  "DELETE /api/users/{userId}/sessions/{sessionId}",
+  "POST /api/roles",
+  "GET /api/roles",
+  "GET /api/roles/{id}",
+  "GET /api/roles/{id}/detail-with-permissions",
+  "PUT /api/roles/{id}",
+  "DELETE /api/roles/{id}",
+  "POST /api/permissions",
+  "GET /api/permissions",
+  "GET /api/permissions/{id}",
+  "PUT /api/permissions/{id}",
+  "DELETE /api/permissions/{id}",
+  "POST /api/user-roles",
+  "GET /api/user-roles",
+  "GET /api/user-roles/users/{userId}",
+  "GET /api/user-roles/roles/{roleId}",
+  "DELETE /api/user-roles/{userId}/{roleId}",
+  "POST /api/role-permissions",
+  "GET /api/role-permissions",
+  "GET /api/role-permissions/roles/{roleId}",
+  "GET /api/role-permissions/permissions/{permissionId}",
+  "DELETE /api/role-permissions/{roleId}/{permissionId}",
+];
+
+const GET_LIST_ENDPOINTS = [
+  "/api/users",
+  "/api/users/{userId}/sessions",
+  "/api/roles",
+  "/api/permissions",
+  "/api/user-roles",
+  "/api/user-roles/users/{userId}",
+  "/api/user-roles/roles/{roleId}",
+  "/api/role-permissions",
+  "/api/role-permissions/roles/{roleId}",
+  "/api/role-permissions/permissions/{permissionId}",
+];
+
+function matchesEndpointPattern(pattern: string, url: string): boolean {
+  const expectedSegments = pattern.split("/").filter(Boolean);
+  const actualSegments = url.replace(/\/+$/, "").split("/").filter(Boolean);
+
+  return (
+    expectedSegments.length === actualSegments.length &&
+    expectedSegments.every((segment, index) =>
+      /^\{[^/]+\}$/.test(segment)
+        ? actualSegments[index].length > 0
+        : segment === actualSegments[index],
+    )
+  );
+}
+
+export function isSupportedEndpointPermission(permission: Permission): boolean {
+  const method = permission.method?.trim().toUpperCase();
+  if (!method || !permission.url) return false;
+
+  return ENDPOINTS.some((endpoint) => {
+    const separator = endpoint.indexOf(" ");
+    return (
+      endpoint.slice(0, separator) === method &&
+      matchesEndpointPattern(endpoint.slice(separator + 1), permission.url)
+    );
+  });
+}
+
 export function buildMatrixGroups(permissions: Permission[]): MatrixGroups {
-  const byModel = new Map<string, Permission[]>();
-  for (const permission of permissions) {
+  const byModule = new Map<string, Map<string, Permission[]>>();
+  for (const permission of permissions.filter(isSupportedEndpointPermission)) {
+    const moduleName = getPermissionModule(permission);
     const model = getPermissionModel(permission);
+    const byModel = byModule.get(moduleName) ?? new Map<string, Permission[]>();
     byModel.set(model, [...(byModel.get(model) ?? []), permission]);
+    byModule.set(moduleName, byModel);
   }
 
   const groups: MatrixGroups = {};
-  const knownModels = new Set<string>();
+  const moduleNames = [...MODULE_NAMES, ...byModule.keys()].filter(
+    (moduleName, index, names) => names.indexOf(moduleName) === index,
+  );
+  for (const moduleName of moduleNames) {
+    const byModel = byModule.get(moduleName);
+    if (!byModel) continue;
 
-  for (const [moduleName, models] of Object.entries(MODULE_GROUPS)) {
-    models.forEach((model) => knownModels.add(model));
-    const rows = models.flatMap((model) => {
-      const modelPermissions = byModel.get(model);
-      return modelPermissions ? [buildRow(model, modelPermissions)] : [];
-    });
+    const rows = [...byModel.entries()].map(([model, modelPermissions]) =>
+      buildRow(model, modelPermissions),
+    );
     if (rows.length > 0) groups[moduleName] = rows;
   }
-
-  const otherRows = [...byModel.entries()]
-    .filter(([model]) => !knownModels.has(model))
-    .map(([model, modelPermissions]) => buildRow(model, modelPermissions));
-  if (otherRows.length > 0) groups["Otros"] = otherRows;
 
   return groups;
 }
@@ -173,7 +280,9 @@ export function buildMatrixGroups(permissions: Permission[]): MatrixGroups {
 export function countModulesWithAccess(groups: MatrixGroups, assignedIds: Set<number>): number {
   return Object.values(groups).filter((rows) =>
     rows.some((row) =>
-      ACTION_KEYS.some((action) => row.permissionsByAction[action].some((permission) => assignedIds.has(permission.id))),
+      ACTION_KEYS.some((action) =>
+        row.permissionsByAction[action].some((permission) => assignedIds.has(permission.id)),
+      ),
     ),
   ).length;
 }
