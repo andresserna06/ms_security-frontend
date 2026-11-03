@@ -81,9 +81,9 @@ export default function UserDetailCard({
               className="rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-sm flex-shrink-0"
               style={{ width: "56px", height: "56px", fontSize: "1.1rem" }}
             >
-              {(profile?.photo || userDetail.photo) ? (
+              {profile?.photo ? (
                 <img
-                  src={profile?.photo || userDetail.photo}
+                  src={profile.photo}
                   alt={userDetail.name}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />

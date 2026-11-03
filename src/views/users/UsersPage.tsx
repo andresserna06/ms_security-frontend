@@ -255,7 +255,6 @@ export default function UsersPage({
       render: (user) => {
         const isSelected = selectedUserId === user.id;
         const avatarUrl =
-          user.photo ||
           user.profile?.photo ||
           `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? "U")}&background=2eb85c&color=fff&bold=true`;
         return (

@@ -8,7 +8,6 @@ export class User {
   password?: string;
   active?: boolean;
   authProvider?: string;
-  photo?: string;
   profile?: Profile | null;
   roles?: UserRole[];
 
