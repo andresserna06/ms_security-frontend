@@ -104,6 +104,19 @@ export default function UsersPage({
     }
   }, [selectedUserId, fetchUserDetail]);
 
+  useEffect(() => {
+    const handleProfileUpdated = () => {
+      fetchUsers(false);
+      if (selectedUserId) {
+        fetchUserDetail(selectedUserId);
+      }
+    };
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
+  }, [fetchUsers, fetchUserDetail, selectedUserId]);
+
   const filteredUsers = useMemo<User[] | null>(() => {
     if (!users) return null;
     return users.filter((user) => {
@@ -242,6 +255,7 @@ export default function UsersPage({
       render: (user) => {
         const isSelected = selectedUserId === user.id;
         const avatarUrl =
+          user.photo ||
           user.profile?.photo ||
           `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? "U")}&background=2eb85c&color=fff&bold=true`;
         return (

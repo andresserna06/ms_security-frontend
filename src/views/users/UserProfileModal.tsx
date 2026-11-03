@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { User } from "../../models/User";
 import { Profile } from "../../models/Profile";
 import { IProfileService } from "../../services/interfaces/IProfileService";
+import { serviceContainer } from "../../services/serviceContainer";
 import GenericModal from "../../components/common/GenericModal";
 import GenericButton from "../../components/common/GenericButton";
 import FormInput from "../../components/common/FormInput";
@@ -149,16 +150,21 @@ export default function UserProfileModal({
   const validate = (): boolean => {
     let valid = true;
 
-    if (!phone || phone.trim().length < 7 || phone.trim().length > 20) {
+    if (phone.trim() && (phone.trim().length < 7 || phone.trim().length > 20)) {
       setPhoneError("El teléfono debe tener entre 7 y 20 caracteres");
       valid = false;
     } else {
       setPhoneError(null);
     }
 
-    if (!birthDate) {
-      setBirthDateError("La fecha de nacimiento es obligatoria");
-      valid = false;
+    if (birthDate) {
+      const selected = new Date(birthDate);
+      if (selected >= new Date()) {
+        setBirthDateError("La fecha de nacimiento debe ser una fecha pasada");
+        valid = false;
+      } else {
+        setBirthDateError(null);
+      }
     } else {
       setBirthDateError(null);
     }
@@ -204,6 +210,16 @@ export default function UserProfileModal({
         "No fue posible guardar el perfil. Verifica que la fecha sea pasada y que el teléfono no pertenezca a otro usuario."
       );
     } else {
+      const currentUserId = serviceContainer.authService.getUserId();
+      if (user.id === currentUserId) {
+        if (photo.trim()) {
+          localStorage.setItem("userAvatar", photo.trim());
+        } else {
+          localStorage.removeItem("userAvatar");
+        }
+      }
+      window.dispatchEvent(new CustomEvent("profile-updated", { detail: { userId: user.id } }));
+
       onSaved(
         hasExistingProfile
           ? `Perfil de ${user.name} actualizado correctamente`
@@ -223,6 +239,12 @@ export default function UserProfileModal({
 
     const deleted = await profileService.remove(user.id);
     if (deleted) {
+      const currentUserId = serviceContainer.authService.getUserId();
+      if (user.id === currentUserId) {
+        localStorage.removeItem("userAvatar");
+      }
+      window.dispatchEvent(new CustomEvent("profile-updated", { detail: { userId: user.id } }));
+
       onSaved(`Perfil de ${user.name} eliminado correctamente`);
       onClose();
     } else {
@@ -336,7 +358,6 @@ export default function UserProfileModal({
                   if (phoneError) setPhoneError(null);
                 }}
                 placeholder="Ej. 3001234567"
-                required
                 error={phoneError}
               />
             </div>
@@ -351,7 +372,6 @@ export default function UserProfileModal({
                   setBirthDate(e.target.value);
                   if (birthDateError) setBirthDateError(null);
                 }}
-                required
                 error={birthDateError}
               />
             </div>

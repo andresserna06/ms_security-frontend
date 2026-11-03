@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CAvatar,
@@ -28,7 +28,7 @@ const AppHeaderDropdown = ({
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser())
   const [showProfileModal, setShowProfileModal] = useState(false)
 
-  useEffect(() => {
+  const refreshUser = useCallback(() => {
     const user = authService.getCurrentUser()
     setCurrentUser(user)
 
@@ -39,6 +39,9 @@ const AppHeaderDropdown = ({
           if (profile?.photo) {
             localStorage.setItem('userAvatar', profile.photo)
             setCurrentUser((prev) => (prev ? { ...prev, avatar: profile.photo } : prev))
+          } else {
+            localStorage.removeItem('userAvatar')
+            setCurrentUser((prev) => (prev ? { ...prev, avatar: '' } : prev))
           }
         })
         .catch((err) => {
@@ -46,6 +49,18 @@ const AppHeaderDropdown = ({
         })
     }
   }, [authService, profileService])
+
+  useEffect(() => {
+    refreshUser()
+
+    const handleProfileUpdated = () => {
+      refreshUser()
+    }
+    window.addEventListener('profile-updated', handleProfileUpdated)
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdated)
+    }
+  }, [refreshUser])
 
   const handleLogout = async (e) => {
     e.preventDefault()
