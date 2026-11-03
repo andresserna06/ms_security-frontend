@@ -38,6 +38,7 @@ export class GithubOAuthProviderService implements IRedirectOAuthProviderService
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       scope: GITHUB_SCOPE,
+      prompt: "select_account",
       state,
     });
 
