@@ -65,3 +65,93 @@ body {
     --cui-footer-bg: var(--cui-body-bg);
   }
 }
+
+// JPA Sports Custom Sidebar Gradient & Contrast
+.sidebar-custom-gradient {
+  background: linear-gradient(180deg, #538827 0%, #70B038 45%, #3d681b 100%) !important;
+  border-right-color: rgba(255, 255, 255, 0.15) !important;
+
+  --cui-sidebar-bg: linear-gradient(180deg, #538827 0%, #70B038 45%, #3d681b 100%);
+  --cui-sidebar-color: #ffffff;
+  --cui-sidebar-border-color: rgba(255, 255, 255, 0.15);
+  --cui-sidebar-brand-bg: rgba(0, 0, 0, 0.12);
+  --cui-sidebar-brand-color: #ffffff;
+  --cui-sidebar-nav-title-color: #d9f2c2;
+  --cui-sidebar-nav-link-color: #ffffff;
+  --cui-sidebar-nav-link-icon-color: #ffffff;
+  --cui-sidebar-nav-link-hover-color: #ffffff;
+  --cui-sidebar-nav-link-hover-bg: rgba(255, 255, 255, 0.18);
+  --cui-sidebar-nav-link-hover-icon-color: #ffffff;
+  --cui-sidebar-nav-link-active-color: #ffffff;
+  --cui-sidebar-nav-link-active-bg: rgba(0, 0, 0, 0.25);
+  --cui-sidebar-nav-link-active-icon-color: #ffffff;
+  --cui-sidebar-footer-bg: rgba(0, 0, 0, 0.12);
+  --cui-sidebar-toggler-bg: rgba(0, 0, 0, 0.15);
+  --cui-sidebar-toggler-color: #ffffff;
+  --cui-sidebar-toggler-hover-bg: rgba(255, 255, 255, 0.2);
+  --cui-sidebar-toggler-hover-color: #ffffff;
+
+  .sidebar-header {
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar-brand-full,
+  .sidebar-brand-narrow {
+    fill: #ffffff;
+    color: #ffffff;
+  }
+
+  .nav-title {
+    color: #d9f2c2 !important;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding-top: 1.25rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .nav-link {
+    color: #ffffff !important;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+
+    .nav-icon {
+      color: #ffffff !important;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.18) !important;
+      color: #ffffff !important;
+
+      .nav-icon {
+        color: #ffffff !important;
+      }
+    }
+
+    &.active {
+      background-color: rgba(0, 0, 0, 0.25) !important;
+      color: #ffffff !important;
+      font-weight: 700;
+      box-shadow: inset 4px 0 0 #ffffff;
+
+      .nav-icon {
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .sidebar-footer {
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(0, 0, 0, 0.12) !important;
+
+    .sidebar-toggler {
+      background-color: rgba(0, 0, 0, 0.15);
+      &::before {
+        filter: brightness(0) invert(1);
+      }
+    }
+  }
+}
+
