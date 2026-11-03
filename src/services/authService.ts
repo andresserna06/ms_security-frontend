@@ -94,6 +94,25 @@ export class AuthService implements IAuthService {
   }
 
   /**
+   * HU-SE-09: Solicitar enlace de recuperación de contraseña
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return await apiClient.post("/auth/forgot-password", {
+      email: email.trim(),
+    });
+  }
+
+  /**
+   * HU-SE-09: Restablecer contraseña con token de un solo uso
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return await apiClient.post("/auth/reset-password", {
+      token: token.trim(),
+      newPassword,
+    });
+  }
+
+  /**
    * Cierre de sesión en el backend y limpieza de almacenamiento local
    */
   async logout(): Promise<void> {

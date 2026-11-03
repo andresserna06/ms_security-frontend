@@ -17,6 +17,8 @@ export interface IAuthService {
   loginGoogle(idToken: string, email?: string): Promise<Session>;
   loginAzure(idToken: string, email?: string): Promise<Session>;
   loginWithProvider(provider: OAuthProviderType, idToken: string, email?: string): Promise<Session>;
+  forgotPassword(email: string): Promise<{ message: string }>;
+  resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
   logout(): Promise<void>;
   setSession(session: Session, email?: string): void;
   getToken(): string | null;

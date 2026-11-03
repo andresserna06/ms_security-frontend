@@ -271,14 +271,21 @@ export default function Login({
                           </CInputGroup>
                         </CCol>
 
-                        <CCol xs={12}>
+                        <CCol xs={12} className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                           <CFormCheck
                             id="rememberMe"
-                            label="Recordarme en este dispositivo"
+                            label="Recordarme"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
                             disabled={loading}
                           />
+                          <Link
+                            to="/forgot-password"
+                            className="small text-decoration-none fw-semibold"
+                            style={{ color: "#70B038" }}
+                          >
+                            ¿Olvidaste tu contraseña?
+                          </Link>
                         </CCol>
 
                         <CCol xs={12}>
