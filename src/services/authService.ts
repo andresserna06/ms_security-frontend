@@ -186,6 +186,26 @@ export class AuthService implements IAuthService {
   }
 
   /**
+   * Lista de roles que trae el token, tal como los emite el backend
+   */
+  getRoles(): string[] {
+    const token = this.getToken();
+    if (!token) {
+      return [];
+    }
+
+    try {
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const claims = JSON.parse(atob(base64));
+      return Array.isArray(claims?.roles)
+        ? claims.roles.filter((role: unknown): role is string => typeof role === "string")
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
    * Comprueba si el usuario tiene el permiso indicado.
    * Solo mejora la experiencia visual; la autorización real la hace el backend.
    */

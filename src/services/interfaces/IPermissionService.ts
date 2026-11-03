@@ -7,6 +7,8 @@ export interface RolePermissionSaveResult {
   removedIds: number[];
   failedAddIds: number[];
   failedRemoveIds: number[];
+  forbidden: boolean;
+  message: string | null;
 }
 
 export interface IPermissionService {

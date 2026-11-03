@@ -5,6 +5,7 @@ import { CContainer, CSpinner } from '@coreui/react'
 // Routes config
 import { routes } from '../routes'
 import authService from '../services/authService'
+import { canAccessRoute } from '../utils/routeAccess'
 import NoAccess from './NoAccess'
 
 const AppContent = ({ roleService, permissionService, userService, profileService }) => {
@@ -15,13 +16,7 @@ const AppContent = ({ roleService, permissionService, userService, profileServic
           {routes.map((route, idx) => {
             const RouteElement = route.element
 
-            const allowed =
-              (!route.adminOnly || authService.isAdmin()) &&
-              (!route.permission ||
-                authService.hasPermission(
-                  route.permission.method,
-                  route.permission.url,
-                ))
+            const allowed = canAccessRoute(route, authService)
 
             return (
               route.element && (

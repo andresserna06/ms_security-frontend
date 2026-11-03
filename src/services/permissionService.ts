@@ -150,11 +150,20 @@ export class PermissionService implements IPermissionService {
         ),
       ]);
 
+      const forbiddenFailure = [...addResults, ...removeResults].find(
+        (response) => response.status === "rejected" && response.reason?.status === 403,
+      );
+
       const result: RolePermissionSaveResult = {
         addedIds: [],
         removedIds: [],
         failedAddIds: [],
         failedRemoveIds: [],
+        forbidden: forbiddenFailure?.status === "rejected",
+        message:
+          forbiddenFailure?.status === "rejected"
+            ? forbiddenFailure.reason?.message || null
+            : null,
       };
 
       addResults.forEach((response, index) => {

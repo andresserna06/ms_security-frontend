@@ -3,6 +3,7 @@ import CIcon from '@coreui/icons-react'
 import { CNavItem, CNavTitle } from '@coreui/react'
 import { cilSpeedometer, cilUser, cilPeople, cilLockLocked } from '@coreui/icons'
 import authService from './services/authService'
+import { canAccessRoute } from './utils/routeAccess'
 
 const _nav = [
   {
@@ -34,7 +35,7 @@ const _nav = [
     name: 'Asignar Permisos',
     to: '/role-permissions',
     icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
-    adminOnly: true,
+    permission: { method: 'GET', url: '/api/role-permissions' },
   },
   {
     component: CNavItem,
@@ -42,18 +43,13 @@ const _nav = [
     to: '/permissions',
     icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
     permission: { method: 'GET', url: '/api/permissions' },
-    adminOnly: true,
   },
 ]
 
 // Menú ya filtrado según los permisos del usuario (sin la propiedad "permission").
 // Llámalo cuando se dibuje el menú, no al cargar el archivo, para que use el token actual.
 export const getNav = () => {
-  const visible = _nav.filter(
-    (item) =>
-      (!item.permission || authService.hasPermission(item.permission.method, item.permission.url)) &&
-      (!item.adminOnly || authService.isAdmin()),
-  )
+  const visible = _nav.filter((item) => canAccessRoute(item, authService))
 
   // Si un título quedó sin ningún ítem debajo, también se quita.
   return visible
@@ -62,7 +58,7 @@ export const getNav = () => {
       const next = visible[index + 1]
       return Boolean(next) && next.component !== CNavTitle
     })
-    .map(({ permission, adminOnly, ...item }) => item)
+    .map(({ permission, ...item }) => item)
 }
 
 export default _nav

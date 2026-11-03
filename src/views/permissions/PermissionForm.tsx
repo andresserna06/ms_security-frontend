@@ -4,7 +4,11 @@ import { Permission } from "../../models/Permission";
 import FormInput from "../../components/common/FormInput";
 import GenericButton from "../../components/common/GenericButton";
 import Alert from "../../components/common/Alert";
-import { getPermissionResourceLabel } from "../../utils/permissionMatrix";
+import {
+  getPermissionModule,
+  getPermissionResourceLabel,
+  MODULE_NAMES,
+} from "../../utils/permissionMatrix";
 
 interface PermissionFormProps {
   initialPermission?: Permission | null;
@@ -18,6 +22,7 @@ interface PermissionFormProps {
 interface FormErrors {
   url?: string;
   method?: string;
+  module?: string;
 }
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
@@ -26,12 +31,15 @@ const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 // sin espacios, sin barras finales y sin nombres de parámetros.
 // /api/users/ == /api/users  y  /api/users/{id} == /api/users/{userId}
 const normalizeUrl = (url: string) =>
-  url.trim().replace(/\/+$/, "").replace(/\{[^}]*\}/g, "{}") || "/";
+  url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\{[^}]*\}/g, "{}") || "/";
 
 // Versión que se guarda: limpia espacios y barra final, conserva los nombres de parámetros.
 const cleanUrl = (url: string) => url.trim().replace(/\/+$/, "") || "/";
 
-const emptyPermission = () => new Permission({ url: "", method: "GET" });
+const emptyPermission = () => new Permission({ url: "", method: "GET", module: "" });
 
 export default function PermissionForm({
   initialPermission = null,
@@ -51,6 +59,7 @@ export default function PermissionForm({
           id: initialPermission.id,
           url: initialPermission.url,
           method: initialPermission.method?.toUpperCase() || "GET",
+          module: initialPermission.module?.trim() || getPermissionModule(initialPermission),
         }),
       );
     } else {
@@ -92,6 +101,10 @@ export default function PermissionForm({
       newErrors.method = "Seleccione un método HTTP válido.";
     }
 
+    if (!permission.module?.trim()) {
+      newErrors.module = "Seleccione el módulo del permiso.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,6 +117,7 @@ export default function PermissionForm({
         ...permission,
         url: cleanUrl(permission.url),
         method: permission.method.trim().toUpperCase(),
+        module: permission.module.trim(),
       }),
     );
   };
@@ -123,13 +137,6 @@ export default function PermissionForm({
         error={errors.url || null}
       />
 
-      <div className="form-text mb-3">
-        Módulo detectado:{" "}
-        <strong>
-          {permission.url.trim() ? getPermissionResourceLabel(permission) : "se deduce de la URL"}
-        </strong>
-      </div>
-
       <div className="mb-3">
         <CFormLabel htmlFor="permission-method">Método</CFormLabel>
         <CFormSelect
@@ -147,6 +154,31 @@ export default function PermissionForm({
           ))}
         </CFormSelect>
         {errors.method ? <div className="invalid-feedback">{errors.method}</div> : null}
+      </div>
+
+      <div className="mb-3">
+        <CFormLabel htmlFor="permission-module">Módulo</CFormLabel>
+        <CFormSelect
+          id="permission-module"
+          name="module"
+          value={permission.module || ""}
+          onChange={handleChange}
+          className={errors.module ? "is-invalid" : ""}
+        >
+          <option value="">Seleccione un módulo</option>
+          {MODULE_NAMES.map((moduleName) => (
+            <option key={moduleName} value={moduleName}>
+              {moduleName}
+            </option>
+          ))}
+        </CFormSelect>
+        {errors.module ? <div className="invalid-feedback">{errors.module}</div> : null}
+        <div className="form-text">
+          Recurso detectado:{" "}
+          <strong>
+            {permission.url.trim() ? getPermissionResourceLabel(permission) : "pendiente"}
+          </strong>
+        </div>
       </div>
 
       <div className="d-flex justify-content-end gap-2 mt-4">
