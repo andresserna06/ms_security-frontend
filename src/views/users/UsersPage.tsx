@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { User } from "../../models/User";
 import { UserRole } from "../../models/UserRole";
+import { Role } from "../../models/Role";
 import { IUserService } from "../../services/interfaces/IUserService";
 import { IProfileService } from "../../services/interfaces/IProfileService";
 import { serviceContainer } from "../../services/serviceContainer";
@@ -28,6 +29,10 @@ export default function UsersPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [roleUserIds, setRoleUserIds] = useState<Set<number> | null>(null);
+  const [isLoadingRoleFilter, setIsLoadingRoleFilter] = useState<boolean>(false);
 
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserDetail, setSelectedUserDetail] = useState<User | null>(null);
@@ -100,6 +105,49 @@ export default function UsersPage({
   }, [fetchUsers]);
 
   useEffect(() => {
+    let active = true;
+    serviceContainer.userRoleService.getAllRoles().then((result) => {
+      if (active && result) {
+        setRoles(result);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (roleFilter === "ALL") {
+      setRoleUserIds(null);
+      setIsLoadingRoleFilter(false);
+      return;
+    }
+
+    let active = true;
+    setRoleUserIds(null);
+    setIsLoadingRoleFilter(true);
+
+    serviceContainer.userRoleService.getByRole(Number(roleFilter)).then((assignments) => {
+      if (!active) return;
+
+      const userIds = new Set<number>();
+      (assignments ?? []).forEach((assignment) => {
+        const userId = assignment.userId ?? assignment.user?.id;
+        if (typeof userId === "number") {
+          userIds.add(userId);
+        }
+      });
+
+      setRoleUserIds(userIds);
+      setIsLoadingRoleFilter(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [roleFilter]);
+
+  useEffect(() => {
     if (selectedUserId) {
       fetchUserDetail(selectedUserId);
     }
@@ -118,9 +166,12 @@ export default function UsersPage({
         (statusFilter === "ACTIVE" && isActive) ||
         (statusFilter === "INACTIVE" && !isActive);
 
-      return matchesSearch && matchesStatus;
+      const matchesRole =
+        roleFilter === "ALL" || (roleUserIds ? roleUserIds.has(user.id) : false);
+
+      return matchesSearch && matchesStatus && matchesRole;
     });
-  }, [users, searchTerm, statusFilter]);
+  }, [users, searchTerm, statusFilter, roleFilter, roleUserIds]);
 
   const handleOpenCreateModal = () => {
     setUserToEdit(null);
@@ -294,7 +345,7 @@ export default function UsersPage({
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
           <div className="row g-3 align-items-center">
-            <div className="col-md-7">
+            <div className="col-md-4">
               <input
                 type="text"
                 className="form-control"
@@ -302,6 +353,21 @@ export default function UsersPage({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="col-md-3">
+              <select
+                className="form-select"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                aria-label="Filtrar por rol"
+              >
+                <option value="ALL">Todos los roles</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="col-md-3">
               <select
@@ -316,7 +382,11 @@ export default function UsersPage({
               </select>
             </div>
             <div className="col-md-2 text-md-end text-body-secondary small">
-              Total: <strong>{filteredUsers ? filteredUsers.length : 0}</strong> usuario(s)
+              Total:{" "}
+              <strong>
+                {isLoadingRoleFilter ? "..." : filteredUsers ? filteredUsers.length : 0}
+              </strong>{" "}
+              usuario(s)
             </div>
           </div>
         </div>

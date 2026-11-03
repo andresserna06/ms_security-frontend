@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Permission } from "../../models/Permission";
 import { Role } from "../../models/Role";
 import { IPermissionService } from "../../services/interfaces/IPermissionService";
@@ -8,7 +8,10 @@ import GenericModal from "../../components/common/GenericModal";
 import Alert from "../../components/common/Alert";
 import Loader from "../../components/common/Loader";
 import PermissionForm from "./PermissionForm";
-import { getPermissionResourceLabel } from "../../utils/permissionMatrix";
+import {
+  getPermissionModule,
+  getPermissionResourceLabel,
+} from "../../utils/permissionMatrix";
 import authService from "../../services/authService";
 
 interface PermissionsProps {
@@ -18,6 +21,7 @@ interface PermissionsProps {
 export default function Permissions({ permissionService }: PermissionsProps) {
   const [permissions, setPermissions] = useState<Permission[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -52,6 +56,22 @@ export default function Permissions({ permissionService }: PermissionsProps) {
   useEffect(() => {
     fetchPermissions();
   }, [fetchPermissions]);
+
+  const filteredPermissions = useMemo<Permission[] | null>(() => {
+    if (!permissions) return null;
+
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return permissions;
+
+    return permissions.filter((permission) => {
+      const moduleName = getPermissionModule(permission);
+      return (
+        moduleName.toLowerCase().includes(term) ||
+        (permission.module ?? "").toLowerCase().includes(term) ||
+        (permission.url ?? "").toLowerCase().includes(term)
+      );
+    });
+  }, [permissions, searchTerm]);
 
   const clearMessages = () => {
     setError(null);
@@ -236,16 +256,40 @@ export default function Permissions({ permissionService }: PermissionsProps) {
       {error ? <Alert type="danger" message={error} onClose={() => setError(null)} /> : null}
       {success ? <Alert type="success" message={success} onClose={() => setSuccess(null)} /> : null}
 
+      <div className="card mb-3 shadow-sm">
+        <div className="card-body">
+          <div className="row g-3 align-items-center">
+            <div className="col-md-9">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar permiso por módulo o URL..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="col-md-3 text-md-end text-body-secondary small">
+              Total: <strong>{filteredPermissions ? filteredPermissions.length : 0}</strong>{" "}
+              permiso(s)
+            </div>
+          </div>
+        </div>
+      </div>
+
       {isLoading ? (
         <Loader text="Cargando permisos..." />
       ) : (
         <GenericTable<Permission>
-          data={permissions}
+          data={filteredPermissions}
           columns={columns}
           actions={actions.length > 0 ? actions : undefined}
           getKey={(permission) => permission.id}
           isLoading={false}
-          emptyMessage="No hay permisos registrados"
+          emptyMessage={
+            searchTerm.trim()
+              ? "No se encontraron permisos con los criterios de búsqueda."
+              : "No hay permisos registrados"
+          }
           errorMessage="No fue posible obtener la lista de permisos."
         />
       )}
@@ -278,33 +322,75 @@ export default function Permissions({ permissionService }: PermissionsProps) {
           <>
             {detailError ? <Alert type="danger" message={detailError} /> : null}
 
-            {detailPermission &&
-  authService.hasPermission("PUT", "/api/permissions/1") && (
-    <GenericButton
-      label="Editar"
-      variant="warning"
-      onClick={() => {
-        closeDetailModal();
-        openEditModal(detailPermission);
-      }}
-    />
-  )}
+            {detailPermission ? (
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <div className="text-body-secondary small">ID</div>
+                  <div className="fw-semibold">#{detailPermission.id}</div>
+                </div>
+                <div className="col-md-6">
+                  <div className="text-body-secondary small">Módulo</div>
+                  <div className="fw-semibold">{getPermissionModule(detailPermission)}</div>
+                </div>
+                <div className="col-md-6">
+                  <div className="text-body-secondary small">Recurso</div>
+                  <div className="fw-semibold">{getPermissionResourceLabel(detailPermission)}</div>
+                </div>
+                <div className="col-md-6">
+                  <div className="text-body-secondary small">Método</div>
+                  <div className="fw-semibold" translate="no">
+                    {detailPermission.method}
+                  </div>
+                </div>
+                <div className="col-12">
+                  <div className="text-body-secondary small">URL</div>
+                  <div className="fw-semibold font-monospace" translate="no">
+                    {detailPermission.url}
+                  </div>
+                </div>
+                <div className="col-12">
+                  <div className="text-body-secondary small mb-2">
+                    Roles asociados ({detailRoles?.length ?? 0})
+                  </div>
+                  {detailRoles === null ? (
+                    <div className="text-body-secondary small fst-italic">
+                      No fue posible cargar los roles asociados.
+                    </div>
+                  ) : detailRoles.length === 0 ? (
+                    <div className="text-body-secondary small fst-italic">
+                      Este permiso no está asignado a ningún rol.
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-wrap gap-2">
+                      {detailRoles.map((role) => (
+                        <span
+                          key={role.id}
+                          className="badge rounded-pill bg-primary px-3 py-2"
+                        >
+                          {role.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-  <GenericButton label="Cerrar" variant="secondary" onClick={closeDetailModal} />
+              <GenericButton label="Cerrar" variant="secondary" onClick={closeDetailModal} />
 
-  {detailPermission &&
-    authService.hasPermission("PUT", "/api/permissions/1") && (
-      <GenericButton
-        label="Editar"
-        variant="warning"
-        onClick={() => {
-          closeDetailModal();
-          openEditModal(detailPermission);
-        }}
-      />
-    )}
-</div>
+              {detailPermission &&
+                authService.hasPermission("PUT", "/api/permissions/1") && (
+                  <GenericButton
+                    label="Editar"
+                    variant="warning"
+                    onClick={() => {
+                      closeDetailModal();
+                      openEditModal(detailPermission);
+                    }}
+                  />
+                )}
+            </div>
           </>
         )}
       </GenericModal>
