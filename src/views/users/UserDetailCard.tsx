@@ -55,6 +55,13 @@ export default function UserDetailCard({
   const profile = userDetail.profile;
   const roles = userRoles || [];
 
+  const userInitials = (userDetail.name ?? "U")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
     <div className="card h-100 shadow-sm">
       <div className="card-header d-flex justify-content-between align-items-center">
@@ -68,10 +75,26 @@ export default function UserDetailCard({
       </div>
 
       <div className="card-body">
-        <div className="d-flex justify-content-between align-items-start mb-3">
-          <div>
-            <h5 className="mb-1 fw-bold">{userDetail.name}</h5>
-            <div className="text-body-secondary small">{userDetail.email}</div>
+        <div className="d-flex justify-content-between align-items-start mb-3 gap-2">
+          <div className="d-flex align-items-center gap-3">
+            <div
+              className="rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-sm flex-shrink-0"
+              style={{ width: "56px", height: "56px", fontSize: "1.1rem" }}
+            >
+              {profile?.photo ? (
+                <img
+                  src={profile.photo}
+                  alt={userDetail.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <span>{userInitials}</span>
+              )}
+            </div>
+            <div>
+              <h5 className="mb-1 fw-bold">{userDetail.name}</h5>
+              <div className="text-body-secondary small">{userDetail.email}</div>
+            </div>
           </div>
           <span className={`badge rounded-pill ${isActive ? "bg-success" : "bg-secondary"}`}>
             {isActive ? "Activo" : "Inactivo"}
@@ -106,6 +129,26 @@ export default function UserDetailCard({
                 <span className="text-body-secondary fst-italic">Sin registrar</span>
               )}
             </span>
+          </li>
+          <li className="list-group-item d-flex justify-content-between px-0 py-2">
+            <span className="text-body-secondary small">Ciudad</span>
+            <span className="fw-semibold small">
+              {profile?.city ? (
+                profile.city
+              ) : (
+                <span className="text-body-secondary fst-italic">Sin registrar</span>
+              )}
+            </span>
+          </li>
+          <li className="list-group-item px-0 py-2">
+            <div className="text-body-secondary small mb-1">Descripción (Perfil)</div>
+            <div className="fw-semibold small">
+              {profile?.bio ? (
+                profile.bio
+              ) : (
+                <span className="text-body-secondary fst-italic">Sin registrar</span>
+              )}
+            </div>
           </li>
         </ul>
 

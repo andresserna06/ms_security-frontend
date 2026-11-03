@@ -239,11 +239,25 @@ export default function UsersPage({
     },
     {
       header: "Usuario",
-      render: (user) => (
-        <span className={selectedUserId === user.id ? "fw-bold text-primary" : "fw-semibold"}>
-          {user.name}
-        </span>
-      ),
+      render: (user) => {
+        const isSelected = selectedUserId === user.id;
+        const avatarUrl =
+          user.profile?.photo ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? "U")}&background=2eb85c&color=fff&bold=true`;
+        return (
+          <div className="d-flex align-items-center gap-2">
+            <img
+              src={avatarUrl}
+              alt={user.name}
+              className="rounded-circle border flex-shrink-0"
+              style={{ width: "32px", height: "32px", objectFit: "cover" }}
+            />
+            <span className={isSelected ? "fw-bold text-primary" : "fw-semibold"}>
+              {user.name}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header: "Correo electrónico",

@@ -55,7 +55,11 @@ const DefaultLayout = ({
     <div>
       <AppSidebar />
       <div className="wrapper d-flex flex-column min-vh-100">
-        <AppHeader />
+        <AppHeader
+          authService={authService}
+          profileService={profileService}
+          userService={userService}
+        />
         <div className="body flex-grow-1">
           <AppContent
             roleService={roleService}
