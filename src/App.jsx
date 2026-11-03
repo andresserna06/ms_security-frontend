@@ -20,6 +20,7 @@ import { useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import { serviceContainer } from './services/serviceContainer'
+import RequireAuth from './guards/RequireAuth'
 import './scss/style.scss'
 
 // We use those styles to show code examples, you should remove them in your application.
@@ -135,13 +136,14 @@ const App = ({
             path="*"
             name="Home"
             element={
-              <DefaultLayout
-                authService={authService}
-                roleService={roleService}
-                permissionService={permissionService}
-                userService={userService}
-                profileService={profileService}
-              />
+              <RequireAuth authService={authService}>
+                <DefaultLayout
+                  roleService={roleService}
+                  permissionService={permissionService}
+                  userService={userService}
+                  profileService={profileService}
+                />
+              </RequireAuth>
             }
           />
         </Routes>
