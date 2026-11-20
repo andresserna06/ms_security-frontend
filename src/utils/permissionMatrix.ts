@@ -54,6 +54,7 @@ const MODEL_TO_MODULE = new Map(
     models.map((model) => [model, moduleName] as const),
   ),
 );
+const ADMINISTRATION_MODELS = new Set(MODULE_GROUPS.Administración);
 
 const RESOURCE_LABELS: Record<string, string> = {
   User: "Usuarios",
@@ -137,7 +138,8 @@ export function getPermissionResourceLabel(permission: Permission): string {
 }
 
 function getAction(permission: Permission): ActionKey | null {
-  const method = permission.method.toUpperCase();
+  const method = permission.method?.trim().toUpperCase();
+  if (!method) return null;
 
   if (method === "GET") {
     return GET_LIST_ENDPOINTS.some((url) => matchesEndpointPattern(url, permission.url))
@@ -167,49 +169,6 @@ function buildRow(model: string, permissions: Permission[]): MatrixRow {
   return { resource: RESOURCE_LABELS[model] ?? model, model, permissionsByAction };
 }
 
-const ENDPOINTS = [
-  "GET /api/users",
-  "POST /api/users",
-  "GET /api/users/{id}",
-  "GET /api/users/{id}/detail",
-  "GET /api/users/{id}/detail-with-sessions",
-  "GET /api/users/{id}/detail-with-roles",
-  "PUT /api/users/{id}",
-  "PATCH /api/users/{id}/deactivate",
-  "PATCH /api/users/{id}/activate",
-  "DELETE /api/users/{id}",
-  "GET /api/users/{userId}/profile",
-  "POST /api/users/{userId}/profile",
-  "PUT /api/users/{userId}/profile",
-  "DELETE /api/users/{userId}/profile",
-  "GET /api/users/{userId}/sessions",
-  "POST /api/users/{userId}/sessions",
-  "GET /api/users/{userId}/sessions/{sessionId}",
-  "PUT /api/users/{userId}/sessions/{sessionId}",
-  "DELETE /api/users/{userId}/sessions/{sessionId}",
-  "POST /api/roles",
-  "GET /api/roles",
-  "GET /api/roles/{id}",
-  "GET /api/roles/{id}/detail-with-permissions",
-  "PUT /api/roles/{id}",
-  "DELETE /api/roles/{id}",
-  "POST /api/permissions",
-  "GET /api/permissions",
-  "GET /api/permissions/{id}",
-  "PUT /api/permissions/{id}",
-  "DELETE /api/permissions/{id}",
-  "POST /api/user-roles",
-  "GET /api/user-roles",
-  "GET /api/user-roles/users/{userId}",
-  "GET /api/user-roles/roles/{roleId}",
-  "DELETE /api/user-roles/{userId}/{roleId}",
-  "POST /api/role-permissions",
-  "GET /api/role-permissions",
-  "GET /api/role-permissions/roles/{roleId}",
-  "GET /api/role-permissions/permissions/{permissionId}",
-  "DELETE /api/role-permissions/{roleId}/{permissionId}",
-];
-
 const GET_LIST_ENDPOINTS = [
   "/api/users",
   "/api/users/{userId}/sessions",
@@ -237,24 +196,16 @@ function matchesEndpointPattern(pattern: string, url: string): boolean {
   );
 }
 
-export function isSupportedEndpointPermission(permission: Permission): boolean {
+export function isMatrixPermission(permission: Permission): boolean {
   const method = permission.method?.trim().toUpperCase();
-  if (!method || !permission.url) return false;
-
-  return ENDPOINTS.some((endpoint) => {
-    const separator = endpoint.indexOf(" ");
-    return (
-      endpoint.slice(0, separator) === method &&
-      matchesEndpointPattern(endpoint.slice(separator + 1), permission.url)
-    );
-  });
+  return Boolean(method && permission.url?.trim() && getAction(permission));
 }
 
 export function buildMatrixGroups(permissions: Permission[]): MatrixGroups {
   const byModule = new Map<string, Map<string, Permission[]>>();
-  for (const permission of permissions.filter(isSupportedEndpointPermission)) {
-    const moduleName = getPermissionModule(permission);
+  for (const permission of permissions.filter(isMatrixPermission)) {
     const model = getPermissionModel(permission);
+    const moduleName = ADMINISTRATION_MODELS.has(model) ? "Administración" : "Otros";
     const byModel = byModule.get(moduleName) ?? new Map<string, Permission[]>();
     byModel.set(model, [...(byModel.get(model) ?? []), permission]);
     byModule.set(moduleName, byModel);

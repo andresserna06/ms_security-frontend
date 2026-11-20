@@ -15,7 +15,7 @@ import RoleSummaryPanel from "../../components/permissions/RoleSummaryPanel";
 import {
   buildMatrixGroups,
   countModulesWithAccess,
-  isSupportedEndpointPermission,
+  isMatrixPermission,
 } from "../../utils/permissionMatrix";
 import authService from "../../services/authService";
 
@@ -167,7 +167,7 @@ export default function RolePermissions({ roleService, permissionService }: Role
 
   const matrixGroups = useMemo(() => buildMatrixGroups(allPermissions ?? []), [allPermissions]);
 
-  const totalAvailable = allPermissions?.filter(isSupportedEndpointPermission).length ?? 0;
+  const totalAvailable = allPermissions?.filter(isMatrixPermission).length ?? 0;
   const modulesWithAccess = useMemo(
     () => countModulesWithAccess(matrixGroups, assignedIds),
     [matrixGroups, assignedIds],
