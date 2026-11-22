@@ -44,6 +44,17 @@ const _nav = [
     icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
     permission: { method: 'GET', url: '/api/permissions' },
   },
+  {
+    component: CNavTitle,
+    name: 'Gestión Deportiva',
+  },
+  {
+    component: CNavItem,
+    name: 'Jugadores',
+    to: '/players',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/players' },
+  },
 ]
 
 // Menú ya filtrado según los permisos del usuario (sin la propiedad "permission").

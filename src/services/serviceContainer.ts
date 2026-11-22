@@ -3,6 +3,7 @@ import { PermissionService } from "./permissionService";
 import { UserRoleService } from "./userRoleService";
 import { UserService } from "./userService";
 import { ProfileService } from "./profileService";
+import { PlayerService } from "./playerService";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
 import { AzureOAuthProviderService } from "./azureOAuthProviderService";
 import { GithubOAuthProviderService } from "./githubOAuthProviderService";
@@ -26,6 +27,7 @@ export const serviceContainer = {
   userRoleService: new UserRoleService(),
   userService: new UserService(),
   profileService: new ProfileService(),
+  playerService: new PlayerService(),
 };
 
 export type ServiceContainer = typeof serviceContainer;
