@@ -155,3 +155,120 @@ body {
   }
 }
 
+// JPA Sports Brand Controls (matching sidebar green #70B038)
+.btn.btn-sports-primary,
+.btn-sports-primary {
+  --cui-btn-color: #ffffff;
+  --cui-btn-bg: #70b038;
+  --cui-btn-border-color: #70b038;
+  --cui-btn-hover-color: #ffffff;
+  --cui-btn-hover-bg: #538827;
+  --cui-btn-hover-border-color: #538827;
+  --cui-btn-active-color: #ffffff;
+  --cui-btn-active-bg: #3d681b;
+  --cui-btn-active-border-color: #3d681b;
+  --cui-btn-disabled-color: #ffffff;
+  --cui-btn-disabled-bg: #9ec879;
+  --cui-btn-disabled-border-color: #9ec879;
+  background-color: #70b038 !important;
+  border-color: #70b038 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    background-color: #538827 !important;
+    border-color: #538827 !important;
+    color: #ffffff !important;
+  }
+
+  &:active {
+    background-color: #3d681b !important;
+    border-color: #3d681b !important;
+    color: #ffffff !important;
+  }
+
+  &:disabled {
+    background-color: #9ec879 !important;
+    border-color: #9ec879 !important;
+    color: #ffffff !important;
+  }
+}
+
+.btn.btn-sports-outline,
+.btn-sports-outline {
+  --cui-btn-color: #4b7d21;
+  --cui-btn-border-color: #70b038;
+  --cui-btn-hover-color: #ffffff;
+  --cui-btn-hover-bg: #70b038;
+  --cui-btn-hover-border-color: #70b038;
+  background-color: transparent;
+  border-color: #70b038;
+  color: #4b7d21;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    background-color: #70b038 !important;
+    border-color: #70b038 !important;
+    color: #ffffff !important;
+  }
+}
+
+.badge-sports {
+  background-color: #70b038 !important;
+  color: #ffffff !important;
+}
+
+.btn.btn-sports-edit,
+.btn-sports-edit {
+  --cui-btn-color: #ffffff;
+  --cui-btn-bg: #3b6ea5;
+  --cui-btn-border-color: #3b6ea5;
+  --cui-btn-hover-color: #ffffff;
+  --cui-btn-hover-bg: #2c5582;
+  --cui-btn-hover-border-color: #2c5582;
+  background-color: #3b6ea5 !important;
+  border-color: #3b6ea5 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    background-color: #2c5582 !important;
+    border-color: #2c5582 !important;
+    color: #ffffff !important;
+  }
+}
+
+.btn.btn-sports-deactivate,
+.btn-sports-deactivate {
+  --cui-btn-color: #ffffff;
+  --cui-btn-bg: #64748b;
+  --cui-btn-border-color: #64748b;
+  --cui-btn-hover-color: #ffffff;
+  --cui-btn-hover-bg: #475569;
+  --cui-btn-hover-border-color: #475569;
+  background-color: #64748b !important;
+  border-color: #64748b !important;
+  color: #ffffff !important;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+  }
+}
+
+.btn-icon-action {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
