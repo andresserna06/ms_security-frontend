@@ -14,6 +14,7 @@ const PlayersPage = React.lazy(() => import('./views/players/PlayersPage'))
 const PlayerSkillsPage = React.lazy(() => import('./views/player-skills/PlayerSkillsPage'))
 const ContractsPage = React.lazy(() => import('./views/contracts/ContractsPage'))
 const RegistrationsPage = React.lazy(() => import('./views/registrations/RegistrationsPage'))
+const PhasesPage = React.lazy(() => import('./views/phases/PhasesPage'))
 const PlayerProfilePage = React.lazy(() => import('./views/player-profile/PlayerProfilePage'))
 
 export const routes = [
@@ -66,6 +67,12 @@ export const routes = [
     name: 'Inscripciones',
     element: RegistrationsPage,
     permission: { method: 'GET', url: '/tournaments' },
+  },
+  {
+    path: '/phases',
+    name: 'Fases',
+    element: PhasesPage,
+    permission: { method: 'GET', url: '/phases' },
   },
   {
     path: '/player-profile',

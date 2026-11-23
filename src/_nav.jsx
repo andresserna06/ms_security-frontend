@@ -10,6 +10,7 @@ import {
   cilNotes,
   cilFindInPage,
   cilClipboard,
+  cilLayers,
 } from '@coreui/icons'
 import authService from './services/authService'
 import { canAccessRoute } from './utils/routeAccess'
@@ -84,6 +85,13 @@ const _nav = [
     to: '/registrations',
     icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
     permission: { method: 'GET', url: '/tournaments' },
+  },
+  {
+    component: CNavItem,
+    name: 'Fases',
+    to: '/phases',
+    icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/phases' },
   },
   {
     component: CNavItem,
