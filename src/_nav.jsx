@@ -1,7 +1,16 @@
 import React from 'react'
 import CIcon from '@coreui/icons-react'
 import { CNavItem, CNavTitle } from '@coreui/react'
-import { cilSpeedometer, cilUser, cilPeople, cilLockLocked, cilStar, cilNotes, cilFindInPage } from '@coreui/icons'
+import {
+  cilSpeedometer,
+  cilUser,
+  cilPeople,
+  cilLockLocked,
+  cilStar,
+  cilNotes,
+  cilFindInPage,
+  cilClipboard,
+} from '@coreui/icons'
 import authService from './services/authService'
 import { canAccessRoute } from './utils/routeAccess'
 
@@ -68,6 +77,13 @@ const _nav = [
     to: '/contracts',
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
     permission: { method: 'GET', url: '/contracts' },
+  },
+  {
+    component: CNavItem,
+    name: 'Inscripciones',
+    to: '/registrations',
+    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/tournaments' },
   },
   {
     component: CNavItem,
