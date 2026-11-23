@@ -1,5 +1,5 @@
 import React from "react";
-import { CTooltip } from "@coreui/react";
+import { CBadge, CTooltip } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilBan } from "@coreui/icons";
 import { TeamPlayerContract } from "../../models/PlayerContract";
@@ -9,6 +9,7 @@ import GenericTable, { TableColumn } from "../../components/common/GenericTable"
 export interface TeamPlayersTableProps {
   contracts: TeamPlayerContract[] | null;
   usersById: Map<number, User>;
+  usersLoaded?: boolean;
   isLoading: boolean;
   errorMessage?: string;
   onEndContract: (contract: TeamPlayerContract) => void;
@@ -17,6 +18,7 @@ export interface TeamPlayersTableProps {
 export default function TeamPlayersTable({
   contracts,
   usersById,
+  usersLoaded = false,
   isLoading,
   errorMessage = "No fue posible obtener los contratos del equipo.",
   onEndContract,
@@ -25,16 +27,43 @@ export default function TeamPlayersTable({
     {
       header: "Jugador",
       render: (contract) => {
-        const user = contract.player
-          ? usersById.get(Number(contract.player.userId))
-          : undefined;
+        const userId = contract.player?.userId;
+        const user =
+          userId !== undefined ? usersById.get(Number(userId)) : undefined;
+
+        if (!user) {
+          return usersLoaded && userId !== undefined ? (
+            <div>
+              <CBadge color="danger" shape="rounded-pill">
+                Cuenta eliminada (ID #{userId})
+              </CBadge>
+            </div>
+          ) : (
+            <div>
+              <div className="fw-semibold">
+                Usuario #{userId ?? contract.playerId}
+              </div>
+              <div className="text-body-secondary small">
+                Jugador #{contract.playerId}
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div>
-            <div className="fw-semibold">
-              {user?.name || `Usuario #${contract.player?.userId ?? contract.playerId}`}
+            <div className="d-flex flex-wrap align-items-center gap-1">
+              <span className="fw-semibold">
+                {user.name || `Usuario #${userId}`}
+              </span>
+              {user.active === false ? (
+                <CBadge color="secondary" shape="rounded-pill">
+                  Cuenta inactiva
+                </CBadge>
+              ) : null}
             </div>
             <div className="text-body-secondary small">
-              {user?.email || `Jugador #${contract.playerId}`}
+              {user.email || `Jugador #${contract.playerId}`}
             </div>
           </div>
         );

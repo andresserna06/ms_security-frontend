@@ -31,6 +31,7 @@ export default function PlayerProfilePage({
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState<boolean>(false);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const hasLoadedListRef = useRef<boolean>(false);
@@ -75,6 +76,7 @@ export default function PlayerProfilePage({
       .then((result) => {
         if (active && result) {
           setUsers(result);
+          setUsersLoaded(true);
         }
       })
       .catch(() => {
@@ -187,9 +189,6 @@ export default function PlayerProfilePage({
     <div className="container-fluid mt-3 pb-4">
       <div className="mb-3">
         <h2 className="mb-0 fw-bold">Perfil Deportivo del Jugador</h2>
-        <small className="text-body-secondary">
-          Consulta centralizada de información básica, equipos asociados y habilidades (HU-GD-08)
-        </small>
       </div>
 
       {error ? (
@@ -233,9 +232,14 @@ export default function PlayerProfilePage({
                 ) : null}
                 {players.map((player) => {
                   const user = usersById.get(Number(player.userId));
+                  const label = user
+                    ? user.name || `Usuario #${player.userId}`
+                    : usersLoaded
+                      ? `Cuenta eliminada (ID #${player.userId})`
+                      : `Usuario #${player.userId}`;
                   return (
                     <option key={player.id} value={player.id}>
-                      {user?.name || `Usuario #${player.userId}`}
+                      {label}
                     </option>
                   );
                 })}
@@ -298,7 +302,11 @@ export default function PlayerProfilePage({
         </div>
       ) : (
         <>
-          <PlayerProfileCard player={profile.player} userDetail={userDetail} />
+          <PlayerProfileCard
+            player={profile.player}
+            userDetail={userDetail}
+            usersLoaded={usersLoaded}
+          />
           <div className="row g-3">
             <div className="col-md-6">
               <ProfileTeamsCard

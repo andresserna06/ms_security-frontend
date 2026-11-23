@@ -27,6 +27,7 @@ export default function PlayersPage({
   const [players, setPlayers] = useState<Player[] | null>(null);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState<boolean>(false);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isFiltering, setIsFiltering] = useState<boolean>(false);
@@ -55,7 +56,7 @@ export default function PlayersPage({
 
   const usersById = useMemo(() => {
     const map = new Map<number, User>();
-    users.forEach((u) => map.set(u.id, u));
+    users.forEach((u) => map.set(Number(u.id), u));
     return map;
   }, [users]);
 
@@ -68,6 +69,7 @@ export default function PlayersPage({
     const result = await userService.getAll();
     if (result) {
       setUsers(result);
+      setUsersLoaded(true);
     }
     setLoadingUsers(false);
   }, [userService]);
@@ -402,6 +404,7 @@ export default function PlayersPage({
               <PlayersTable
                 players={players}
                 usersById={usersById}
+                usersLoaded={usersLoaded}
                 isLoading={isLoading}
                 errorMessage={error || undefined}
                 selectedPlayerId={selectedPlayerId}
@@ -418,6 +421,7 @@ export default function PlayersPage({
           <PlayerDetailCard
             playerDetail={selectedPlayerDetail}
             userDetail={selectedUserDetail}
+            usersLoaded={usersLoaded}
             loadingDetail={loadingDetail}
             onEditPlayer={handleOpenEdit}
             onToggleStatus={handleToggleStatus}

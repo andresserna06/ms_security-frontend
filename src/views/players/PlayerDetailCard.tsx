@@ -1,4 +1,5 @@
 import React from "react";
+import { CBadge } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilBan, cilCheckCircle, cilPencil, cilTrash } from "@coreui/icons";
 import { Player } from "../../models/Player";
@@ -9,6 +10,7 @@ import Loader from "../../components/common/Loader";
 export interface PlayerDetailCardProps {
   playerDetail: Player | null;
   userDetail: User | null;
+  usersLoaded?: boolean;
   loadingDetail: boolean;
   onEditPlayer: (player: Player) => void;
   onToggleStatus: (player: Player) => void;
@@ -18,6 +20,7 @@ export interface PlayerDetailCardProps {
 export default function PlayerDetailCard({
   playerDetail,
   userDetail,
+  usersLoaded = false,
   loadingDetail,
   onEditPlayer,
   onToggleStatus,
@@ -48,16 +51,23 @@ export default function PlayerDetailCard({
     );
   }
 
+  const isDeletedAccount = usersLoaded && !loadingDetail && !userDetail;
+  const isInactiveAccount = Boolean(userDetail && userDetail.active === false);
   const displayName = userDetail?.name || `Usuario #${playerDetail.userId}`;
-  const initials = displayName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+  const initials = isDeletedAccount
+    ? "!"
+    : displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("");
 
   return (
-    <div className="card h-100 shadow-sm">
+    <div
+      className={`card h-100 shadow-sm ${isDeletedAccount ? "border-danger" : ""
+        }`}
+    >
       <div className="card-header d-flex justify-content-between align-items-center">
         <span className="fw-semibold">Detalle del jugador</span>
         <div className="d-flex align-items-center gap-2">
@@ -82,7 +92,7 @@ export default function PlayerDetailCard({
                 width: "52px",
                 height: "52px",
                 fontSize: "1.05rem",
-                backgroundColor: "#70B038",
+                backgroundColor: isDeletedAccount ? "#dc3545" : "#70B038",
               }}
             >
               {userDetail?.profile?.photo ? (
@@ -96,7 +106,22 @@ export default function PlayerDetailCard({
               )}
             </div>
             <div>
-              <h5 className="mb-1 fw-bold">{displayName}</h5>
+              {isDeletedAccount ? (
+                <div className="mb-1">
+                  <CBadge color="danger" shape="rounded-pill">
+                    Cuenta eliminada (ID #{playerDetail.userId})
+                  </CBadge>
+                </div>
+              ) : (
+                <div className="d-flex flex-wrap align-items-center gap-1 mb-1">
+                  <h5 className="mb-0 fw-bold">{displayName}</h5>
+                  {isInactiveAccount ? (
+                    <CBadge color="secondary" shape="rounded-pill">
+                      Cuenta inactiva
+                    </CBadge>
+                  ) : null}
+                </div>
+              )}
               <div className="text-body-secondary small">
                 {userDetail?.email || `Usuario ID #${playerDetail.userId}`}
               </div>
@@ -104,9 +129,8 @@ export default function PlayerDetailCard({
           </div>
 
           <span
-            className={`badge rounded-pill ${
-              playerDetail.active ? "badge-sports" : "bg-secondary"
-            }`}
+            className={`badge rounded-pill ${playerDetail.active ? "badge-sports" : "bg-secondary"
+              }`}
           >
             {playerDetail.active ? "Activo" : "Inactivo"}
           </span>
@@ -131,7 +155,7 @@ export default function PlayerDetailCard({
             <span className="text-body-secondary small">Dorsal</span>
             <span className="fw-semibold small">
               {playerDetail.jerseyNumber !== null &&
-              playerDetail.jerseyNumber !== undefined ? (
+                playerDetail.jerseyNumber !== undefined ? (
                 `#${playerDetail.jerseyNumber}`
               ) : (
                 <span className="text-body-secondary fst-italic">
@@ -180,11 +204,10 @@ export default function PlayerDetailCard({
           <div className="col-6">
             <button
               type="button"
-              className={`btn btn-sm w-100 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 ${
-                playerDetail.active
-                  ? "btn-sports-deactivate"
-                  : "btn-sports-primary"
-              }`}
+              className={`btn btn-sm w-100 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 ${playerDetail.active
+                ? "btn-sports-deactivate"
+                : "btn-sports-primary"
+                }`}
               onClick={() => onToggleStatus(playerDetail)}
             >
               <CIcon

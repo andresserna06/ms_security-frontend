@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { CBadge } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilPlus, cilStar, cilUser } from "@coreui/icons";
 import { Player } from "../../models/Player";
@@ -40,6 +41,7 @@ export default function PlayerSkillsPage({
   const [players, setPlayers] = useState<Player[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState<boolean>(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState<boolean>(true);
 
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
@@ -89,9 +91,14 @@ export default function PlayerSkillsPage({
   const formatPlayerName = useCallback(
     (player: Player): string => {
       const user = usersById.get(Number(player.userId));
-      return user?.name || `Usuario #${player.userId}`;
+      if (!user) {
+        return usersLoaded
+          ? `Cuenta eliminada (ID #${player.userId})`
+          : `Usuario #${player.userId}`;
+      }
+      return user.name || `Usuario #${player.userId}`;
     },
-    [usersById],
+    [usersById, usersLoaded],
   );
 
   const loadCatalogs = useCallback(async () => {
@@ -107,6 +114,7 @@ export default function PlayerSkillsPage({
       setSkills(allSkills);
       if (allUsers) {
         setUsers(allUsers);
+        setUsersLoaded(true);
       }
       if (allPlayers.length > 0) {
         setSelectedPlayerId((prev) =>
@@ -348,25 +356,43 @@ export default function PlayerSkillsPage({
               />
             ) : null}
 
-            {selectedPlayer ? (
-              <div className="d-flex flex-wrap align-items-center gap-3 mb-3 p-2 px-3 bg-light rounded border small">
-                <span>
-                  <span className="text-body-secondary">Documento:</span>{" "}
-                  <strong>{selectedPlayer.document}</strong>
-                </span>
-                <span>
-                  <span className="text-body-secondary">Posición:</span>{" "}
-                  <strong>{selectedPlayer.position || "Sin definir"}</strong>
-                </span>
-                <span
-                  className={`badge rounded-pill ms-auto ${
-                    selectedPlayer.active ? "badge-sports" : "bg-secondary"
+            {selectedPlayer ? (() => {
+              const linkedUser = usersById.get(Number(selectedPlayer.userId));
+              const isDeletedAccount = usersLoaded && !linkedUser;
+              const isInactiveAccount = Boolean(linkedUser && linkedUser.active === false);
+              return (
+                <div
+                  className={`d-flex flex-wrap align-items-center gap-3 mb-3 p-2 px-3 bg-light rounded border small ${
+                    isDeletedAccount ? "border-danger" : ""
                   }`}
                 >
-                  {selectedPlayer.active ? "Activo" : "Inactivo"}
-                </span>
-              </div>
-            ) : null}
+                  <span>
+                    <span className="text-body-secondary">Documento:</span>{" "}
+                    <strong>{selectedPlayer.document}</strong>
+                  </span>
+                  <span>
+                    <span className="text-body-secondary">Posición:</span>{" "}
+                    <strong>{selectedPlayer.position || "Sin definir"}</strong>
+                  </span>
+                  {isDeletedAccount ? (
+                    <CBadge color="danger" shape="rounded-pill">
+                      Cuenta eliminada (ID #{selectedPlayer.userId})
+                    </CBadge>
+                  ) : isInactiveAccount ? (
+                    <CBadge color="secondary" shape="rounded-pill">
+                      Cuenta inactiva
+                    </CBadge>
+                  ) : null}
+                  <span
+                    className={`badge rounded-pill ms-auto ${
+                      selectedPlayer.active ? "badge-sports" : "bg-secondary"
+                    }`}
+                  >
+                    {selectedPlayer.active ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              );
+            })() : null}
 
             <PlayerSkillsTable
               items={playerSkills}
@@ -422,6 +448,7 @@ export default function PlayerSkillsPage({
             <SkillPlayersTable
               items={skillPlayers}
               usersById={usersById}
+              usersLoaded={usersLoaded}
               isLoading={loadingSkillPlayers}
               errorMessage={error || undefined}
             />

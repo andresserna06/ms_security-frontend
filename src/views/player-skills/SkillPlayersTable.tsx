@@ -1,4 +1,5 @@
 import React from "react";
+import { CBadge } from "@coreui/react";
 import { SkillAssignedPlayer } from "../../models/PlayerSkill";
 import { User } from "../../models/User";
 import GenericTable, { TableColumn } from "../../components/common/GenericTable";
@@ -6,6 +7,7 @@ import GenericTable, { TableColumn } from "../../components/common/GenericTable"
 export interface SkillPlayersTableProps {
   items: SkillAssignedPlayer[] | null;
   usersById: Map<number, User>;
+  usersLoaded?: boolean;
   isLoading: boolean;
   errorMessage?: string;
 }
@@ -24,6 +26,7 @@ function formatAssignedDate(iso: string): string {
 export default function SkillPlayersTable({
   items,
   usersById,
+  usersLoaded = false,
   isLoading,
   errorMessage = "No fue posible obtener los jugadores con esta habilidad.",
 }: SkillPlayersTableProps) {
@@ -31,14 +34,43 @@ export default function SkillPlayersTable({
     {
       header: "Jugador",
       render: (item) => {
-        const user = item.player ? usersById.get(Number(item.player.userId)) : undefined;
+        const userId = item.player?.userId;
+        const user =
+          userId !== undefined ? usersById.get(Number(userId)) : undefined;
+
+        if (!user) {
+          return usersLoaded && userId !== undefined ? (
+            <div>
+              <CBadge color="danger" shape="rounded-pill">
+                Cuenta eliminada (ID #{userId})
+              </CBadge>
+            </div>
+          ) : (
+            <div>
+              <div className="fw-semibold">
+                Usuario #{userId ?? item.playerId}
+              </div>
+              <div className="text-body-secondary small">
+                Jugador #{item.playerId}
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div>
-            <div className="fw-semibold">
-              {user?.name || `Usuario #${item.player?.userId ?? item.playerId}`}
+            <div className="d-flex flex-wrap align-items-center gap-1">
+              <span className="fw-semibold">
+                {user.name || `Usuario #${userId}`}
+              </span>
+              {user.active === false ? (
+                <CBadge color="secondary" shape="rounded-pill">
+                  Cuenta inactiva
+                </CBadge>
+              ) : null}
             </div>
             <div className="text-body-secondary small">
-              {user?.email || `Jugador #${item.playerId}`}
+              {user.email || `Jugador #${item.playerId}`}
             </div>
           </div>
         );

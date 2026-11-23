@@ -1,26 +1,37 @@
 import React from "react";
+import { CBadge } from "@coreui/react";
 import { Player } from "../../models/Player";
 import { User } from "../../models/User";
 
 export interface PlayerProfileCardProps {
   player: Player;
   userDetail: User | null;
+  usersLoaded?: boolean;
 }
 
 export default function PlayerProfileCard({
   player,
   userDetail,
+  usersLoaded = false,
 }: PlayerProfileCardProps) {
+  const isDeletedAccount = usersLoaded && !userDetail;
+  const isInactiveAccount = Boolean(userDetail && userDetail.active === false);
   const displayName = userDetail?.name || `Usuario #${player.userId}`;
-  const initials = displayName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+  const initials = isDeletedAccount
+    ? "!"
+    : displayName
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join("");
 
   return (
-    <div className="card shadow-sm mb-3">
+    <div
+      className={`card shadow-sm mb-3 ${
+        isDeletedAccount ? "border-danger" : ""
+      }`}
+    >
       <div className="card-header d-flex justify-content-between align-items-center">
         <span className="fw-semibold">Información básica del jugador</span>
         <span
@@ -39,7 +50,7 @@ export default function PlayerProfileCard({
               width: "64px",
               height: "64px",
               fontSize: "1.25rem",
-              backgroundColor: "#70B038",
+              backgroundColor: isDeletedAccount ? "#dc3545" : "#70B038",
             }}
           >
             {userDetail?.profile?.photo ? (
@@ -53,7 +64,22 @@ export default function PlayerProfileCard({
             )}
           </div>
           <div className="flex-grow-1">
-            <h4 className="mb-1 fw-bold">{displayName}</h4>
+            {isDeletedAccount ? (
+              <div className="mb-1">
+                <CBadge color="danger" shape="rounded-pill">
+                  Cuenta eliminada (ID #{player.userId})
+                </CBadge>
+              </div>
+            ) : (
+              <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <h4 className="mb-0 fw-bold">{displayName}</h4>
+                {isInactiveAccount ? (
+                  <CBadge color="secondary" shape="rounded-pill">
+                    Cuenta inactiva
+                  </CBadge>
+                ) : null}
+              </div>
+            )}
             <div className="text-body-secondary small">
               {userDetail?.email || `ID de usuario: #${player.userId}`}
             </div>

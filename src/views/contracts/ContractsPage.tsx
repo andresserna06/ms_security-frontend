@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { CBadge } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilPeople, cilPlus, cilUser } from "@coreui/icons";
 import { Player } from "../../models/Player";
@@ -42,6 +43,7 @@ export default function ContractsPage({
   const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [usersLoaded, setUsersLoaded] = useState<boolean>(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState<boolean>(true);
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
@@ -90,9 +92,14 @@ export default function ContractsPage({
   const formatPlayerName = useCallback(
     (player: Player): string => {
       const user = usersById.get(Number(player.userId));
-      return user?.name || `Usuario #${player.userId}`;
+      if (!user) {
+        return usersLoaded
+          ? `Cuenta eliminada (ID #${player.userId})`
+          : `Usuario #${player.userId}`;
+      }
+      return user.name || `Usuario #${player.userId}`;
     },
-    [usersById],
+    [usersById, usersLoaded],
   );
 
   const mapFilterToParam = (filter: CurrentFilter): boolean | undefined => {
@@ -114,6 +121,7 @@ export default function ContractsPage({
       setPlayers(allPlayers);
       if (allUsers) {
         setUsers(allUsers);
+        setUsersLoaded(true);
       }
       if (allTeams.length > 0) {
         setSelectedTeamId((prev) =>
@@ -128,7 +136,7 @@ export default function ContractsPage({
     } catch (err: any) {
       setError(
         err?.message ||
-          "No fue posible cargar los catálogos de equipos y jugadores.",
+        "No fue posible cargar los catálogos de equipos y jugadores.",
       );
     } finally {
       setLoadingCatalogs(false);
@@ -178,7 +186,7 @@ export default function ContractsPage({
       } catch (err: any) {
         setError(
           err?.message ||
-            "No fue posible obtener el historial de equipos del jugador.",
+          "No fue posible obtener el historial de equipos del jugador.",
         );
         setPlayerContracts(null);
       } finally {
@@ -254,9 +262,6 @@ export default function ContractsPage({
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
           <h2 className="mb-0 fw-bold">Contratos Jugador–Equipo</h2>
-          <small className="text-body-secondary">
-            Gestiona la plantilla de cada equipo y el historial de traspasos (HU-GD-05)
-          </small>
         </div>
       </div>
 
@@ -275,9 +280,8 @@ export default function ContractsPage({
         <li className="nav-item">
           <button
             type="button"
-            className={`nav-link d-inline-flex align-items-center gap-2 ${
-              activeTab === "BY_TEAM" ? "active fw-semibold" : ""
-            }`}
+            className={`nav-link d-inline-flex align-items-center gap-2 ${activeTab === "BY_TEAM" ? "active fw-semibold" : ""
+              }`}
             onClick={() => {
               setActiveTab("BY_TEAM");
               setError(null);
@@ -290,9 +294,8 @@ export default function ContractsPage({
         <li className="nav-item">
           <button
             type="button"
-            className={`nav-link d-inline-flex align-items-center gap-2 ${
-              activeTab === "BY_PLAYER" ? "active fw-semibold" : ""
-            }`}
+            className={`nav-link d-inline-flex align-items-center gap-2 ${activeTab === "BY_PLAYER" ? "active fw-semibold" : ""
+              }`}
             onClick={() => {
               setActiveTab("BY_PLAYER");
               setError(null);
@@ -374,6 +377,7 @@ export default function ContractsPage({
             <TeamPlayersTable
               contracts={teamContracts}
               usersById={usersById}
+              usersLoaded={usersLoaded}
               isLoading={loadingTeamContracts}
               errorMessage={error || undefined}
               onEndContract={(contract) => {
@@ -438,25 +442,41 @@ export default function ContractsPage({
               </div>
             </div>
 
-            {selectedPlayer ? (
-              <div className="d-flex flex-wrap align-items-center gap-3 mb-3 p-2 px-3 bg-light rounded border small">
-                <span>
-                  <span className="text-body-secondary">Documento:</span>{" "}
-                  <strong>{selectedPlayer.document}</strong>
-                </span>
-                <span>
-                  <span className="text-body-secondary">Posición:</span>{" "}
-                  <strong>{selectedPlayer.position || "Sin definir"}</strong>
-                </span>
-                <span
-                  className={`badge rounded-pill ms-auto ${
-                    selectedPlayer.active ? "badge-sports" : "bg-secondary"
-                  }`}
+            {selectedPlayer ? (() => {
+              const linkedUser = usersById.get(Number(selectedPlayer.userId));
+              const isDeletedAccount = usersLoaded && !linkedUser;
+              const isInactiveAccount = Boolean(linkedUser && linkedUser.active === false);
+              return (
+                <div
+                  className={`d-flex flex-wrap align-items-center gap-3 mb-3 p-2 px-3 bg-light rounded border small ${isDeletedAccount ? "border-danger" : ""
+                    }`}
                 >
-                  {selectedPlayer.active ? "Activo" : "Inactivo"}
-                </span>
-              </div>
-            ) : null}
+                  <span>
+                    <span className="text-body-secondary">Documento:</span>{" "}
+                    <strong>{selectedPlayer.document}</strong>
+                  </span>
+                  <span>
+                    <span className="text-body-secondary">Posición:</span>{" "}
+                    <strong>{selectedPlayer.position || "Sin definir"}</strong>
+                  </span>
+                  {isDeletedAccount ? (
+                    <CBadge color="danger" shape="rounded-pill">
+                      Cuenta eliminada (ID #{selectedPlayer.userId})
+                    </CBadge>
+                  ) : isInactiveAccount ? (
+                    <CBadge color="secondary" shape="rounded-pill">
+                      Cuenta inactiva
+                    </CBadge>
+                  ) : null}
+                  <span
+                    className={`badge rounded-pill ms-auto ${selectedPlayer.active ? "badge-sports" : "bg-secondary"
+                      }`}
+                  >
+                    {selectedPlayer.active ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              );
+            })() : null}
 
             <PlayerTeamsTable
               contracts={playerContracts}

@@ -1,5 +1,5 @@
 import React from "react";
-import { CTooltip } from "@coreui/react";
+import { CBadge, CTooltip } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilBan, cilCheckCircle, cilPencil, cilTrash } from "@coreui/icons";
 import { Player } from "../../models/Player";
@@ -9,6 +9,7 @@ import GenericTable, { TableColumn } from "../../components/common/GenericTable"
 export interface PlayersTableProps {
   players: Player[] | null;
   usersById: Map<number, User>;
+  usersLoaded?: boolean;
   isLoading: boolean;
   errorMessage?: string;
   selectedPlayerId: number | null;
@@ -21,6 +22,7 @@ export interface PlayersTableProps {
 export default function PlayersTable({
   players,
   usersById,
+  usersLoaded = false,
   isLoading,
   errorMessage = "No fue posible obtener la lista de jugadores.",
   selectedPlayerId,
@@ -37,14 +39,39 @@ export default function PlayersTable({
     {
       header: "Usuario",
       render: (player) => {
-        const user = usersById.get(player.userId);
+        const user = usersById.get(Number(player.userId));
+        if (!user) {
+          return usersLoaded ? (
+            <div>
+              <CBadge color="danger" shape="rounded-pill">
+                Cuenta eliminada (ID #{player.userId})
+              </CBadge>
+            </div>
+          ) : (
+            <div>
+              <div className="fw-semibold">Usuario #{player.userId}</div>
+              <div className="text-body-secondary small">
+                ID usuario: {player.userId}
+              </div>
+            </div>
+          );
+        }
+
+        const isInactiveAccount = user.active === false;
         return (
           <div>
-            <div className="fw-semibold">
-              {user?.name || `Usuario #${player.userId}`}
+            <div className="d-flex flex-wrap align-items-center gap-1">
+              <span className="fw-semibold">
+                {user.name || `Usuario #${player.userId}`}
+              </span>
+              {isInactiveAccount ? (
+                <CBadge color="secondary" shape="rounded-pill">
+                  Cuenta inactiva
+                </CBadge>
+              ) : null}
             </div>
             <div className="text-body-secondary small">
-              {user?.email || `ID usuario: ${player.userId}`}
+              {user.email || `ID usuario: ${player.userId}`}
             </div>
           </div>
         );
