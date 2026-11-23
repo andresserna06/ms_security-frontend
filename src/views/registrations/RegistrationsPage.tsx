@@ -35,6 +35,7 @@ export default function RegistrationsPage({
   const [loadingRegistrations, setLoadingRegistrations] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [withdrawing, setWithdrawing] = useState<boolean>(false);
+  const [confirming, setConfirming] = useState<boolean>(false);
 
   const [pageError, setPageError] = useState<string | null>(null);
   const [tableError, setTableError] = useState<string | undefined>(undefined);
@@ -44,6 +45,8 @@ export default function RegistrationsPage({
 
   const [showForm, setShowForm] = useState<boolean>(false);
   const [registrationToWithdraw, setRegistrationToWithdraw] =
+    useState<Registration | null>(null);
+  const [registrationToConfirm, setRegistrationToConfirm] =
     useState<Registration | null>(null);
 
   const selectedTournament = useMemo(
@@ -257,6 +260,51 @@ export default function RegistrationsPage({
     }
   };
 
+  const handleConfirmRegistration = async () => {
+    if (!registrationToConfirm || !selectedTournamentId) return;
+    if (
+      !Number.isInteger(registrationToConfirm.teamId) ||
+      registrationToConfirm.teamId < 1
+    ) {
+      setPageError("No se pudo identificar el equipo de la inscripción.");
+      setRegistrationToConfirm(null);
+      return;
+    }
+    setConfirming(true);
+    setPageError(null);
+    setSuccess(null);
+    try {
+      const updated = await registrationService.confirm(
+        Number(selectedTournamentId),
+        registrationToConfirm.teamId,
+      );
+      if (updated) {
+        setRegistrations((prev) =>
+          (prev ?? []).map((item) =>
+            item.teamId === updated.teamId ? { ...item, ...updated } : item,
+          ),
+        );
+      } else {
+        setRegistrations((prev) =>
+          (prev ?? []).map((item) =>
+            item.teamId === registrationToConfirm.teamId
+              ? { ...item, status: "CONFIRMED", withdrawnAt: null }
+              : item,
+          ),
+        );
+      }
+      setRegistrationToConfirm(null);
+      setSuccess("Inscripción reintegrada correctamente.");
+      await loadRegistrations(selectedTournamentId);
+    } catch (err: any) {
+      setRegistrationToConfirm(null);
+      setPageError(err?.message || "No fue posible reintegrar la inscripción.");
+      await loadRegistrations(selectedTournamentId);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   if (loadingCatalogs) {
     return (
       <div className="container-fluid mt-3">
@@ -317,6 +365,7 @@ export default function RegistrationsPage({
             isLoading={loadingRegistrations}
             errorMessage={tableError}
             onWithdraw={(registration) => setRegistrationToWithdraw(registration)}
+            onConfirm={(registration) => setRegistrationToConfirm(registration)}
           />
         </div>
       </div>
@@ -350,6 +399,26 @@ export default function RegistrationsPage({
         onConfirm={handleWithdraw}
         onCancel={() => {
           if (!withdrawing) setRegistrationToWithdraw(null);
+        }}
+      />
+
+      <ConfirmModal
+        visible={Boolean(registrationToConfirm)}
+        title="Reintegrar inscripción"
+        message={
+          <p className="mb-0">
+            ¿Reintegrar a este equipo
+            {registrationToConfirm?.teamName
+              ? ` (${registrationToConfirm.teamName})`
+              : ""}
+            ?
+          </p>
+        }
+        confirmLabel="Reintegrar"
+        isLoading={confirming}
+        onConfirm={handleConfirmRegistration}
+        onCancel={() => {
+          if (!confirming) setRegistrationToConfirm(null);
         }}
       />
     </div>

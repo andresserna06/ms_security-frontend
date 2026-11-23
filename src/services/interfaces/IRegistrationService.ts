@@ -7,4 +7,5 @@ export interface IRegistrationService {
     payload: RegistrationCreatePayload,
   ): Promise<Registration>;
   withdraw(tournamentId: number, teamId: number): Promise<Registration | void>;
+  confirm(tournamentId: number, teamId: number): Promise<Registration | void>;
 }
