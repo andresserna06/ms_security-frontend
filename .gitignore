@@ -24,3 +24,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .gstack/
+
+# Temporary local AI skills (do not commit)
+.opencode/skills/api-rest/
+.opencode/skills/flujo-git/

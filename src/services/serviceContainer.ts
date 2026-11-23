@@ -10,6 +10,11 @@ import { TeamService } from "./teamService";
 import { PlayerContractService } from "./playerContractService";
 import { PlayerProfileService } from "./playerProfileService";
 import { MatchResultService } from "./matchResultService";
+import { TournamentService } from "./tournamentService";
+import { RegistrationService } from "./registrationService";
+import { PhaseService } from "./phaseService";
+import { GroupService } from "./groupService";
+import { FinalPhaseService } from "./finalPhaseService";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
 import { AzureOAuthProviderService } from "./azureOAuthProviderService";
 import { GithubOAuthProviderService } from "./githubOAuthProviderService";
@@ -40,6 +45,11 @@ export const serviceContainer = {
   playerContractService: new PlayerContractService(),
   playerProfileService: new PlayerProfileService(),
   matchResultService: new MatchResultService(),
+  tournamentService: new TournamentService(),
+  registrationService: new RegistrationService(),
+  phaseService: new PhaseService(),
+  groupService: new GroupService(),
+  finalPhaseService: new FinalPhaseService(),
 };
 
 export type ServiceContainer = typeof serviceContainer;
