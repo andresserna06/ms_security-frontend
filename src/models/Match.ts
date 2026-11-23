@@ -24,6 +24,11 @@ export interface MatchUpdatePayload {
   awayTeamId?: number;
 }
 
+export interface MatchResultPayload {
+  homeScore: number;
+  awayScore: number;
+}
+
 export interface MatchFinishPayload {
   homeScore: number;
   awayScore: number;

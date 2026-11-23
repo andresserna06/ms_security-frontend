@@ -10,7 +10,6 @@ import Loader from "../../components/common/Loader";
 import MatchFilters from "./MatchFilters";
 import MatchesTable from "./MatchesTable";
 import MatchFormModal, { MatchFormValues } from "./MatchFormModal";
-import MatchFinishModal from "./MatchFinishModal";
 
 function getErrorFieldErrors(err: unknown): Record<string, string> {
   if (err && typeof err === "object" && "fieldErrors" in err) {
@@ -48,13 +47,11 @@ export default function MatchesPage() {
   const [tableError, setTableError] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
   const [formFieldErrors, setFormFieldErrors] = useState<Record<string, string>>({});
-  const [finishError, setFinishError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
-  const [matchToCancel, setMatchToCancel] = useState<Match | null>(null);
   const [matchToFinish, setMatchToFinish] = useState<Match | null>(null);
 
   const [groupTeamsByPhaseId, setGroupTeamsByPhaseId] = useState<Record<number, Team[]>>({});
@@ -265,24 +262,6 @@ export default function MatchesPage() {
     }
   };
 
-  const handleCancel = async () => {
-    if (!matchToCancel) return;
-    setActionLoading(true);
-    setPageError(null);
-    setSuccess(null);
-    try {
-      await matchService.cancel(matchToCancel.id);
-      setMatchToCancel(null);
-      setSuccess("Partido cancelado correctamente.");
-      await loadMatches();
-    } catch (err: any) {
-      setPageError(err?.message || "No fue posible cancelar el partido.");
-      setMatchToCancel(null);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!matchToDelete) return;
     setActionLoading(true);
@@ -301,19 +280,23 @@ export default function MatchesPage() {
     }
   };
 
-  const handleFinish = async (payload: MatchFinishPayload) => {
+  const handleFinish = async () => {
     if (!matchToFinish) return;
     setActionLoading(true);
-    setFinishError(null);
     setPageError(null);
     setSuccess(null);
     try {
+      const payload: MatchFinishPayload = {
+        homeScore: matchToFinish.homeScore ?? 0,
+        awayScore: matchToFinish.awayScore ?? 0,
+      };
       await matchService.finish(matchToFinish.id, payload);
       setMatchToFinish(null);
       setSuccess("Partido finalizado correctamente.");
       await loadMatches();
     } catch (err: any) {
-      setFinishError(err?.message || "No fue posible finalizar el partido.");
+      setPageError(err?.message || "No fue posible finalizar el partido.");
+      setMatchToFinish(null);
     } finally {
       setActionLoading(false);
     }
@@ -366,12 +349,8 @@ export default function MatchesPage() {
             errorMessage={tableError}
             onStart={handleStart}
             onEdit={openEdit}
-            onCancel={(match) => setMatchToCancel(match)}
             onDelete={(match) => setMatchToDelete(match)}
-            onFinish={(match) => {
-              setFinishError(null);
-              setMatchToFinish(match);
-            }}
+            onFinish={(match) => setMatchToFinish(match)}
           />
         </div>
       </div>
@@ -408,27 +387,26 @@ export default function MatchesPage() {
       />
 
       <ConfirmModal
-        visible={Boolean(matchToCancel)}
-        title="Cancelar partido"
-        message={<p className="mb-0">¿Desea cancelar este partido?</p>}
-        confirmLabel="Cancelar partido"
+        visible={Boolean(matchToFinish)}
+        title="Finalizar partido"
+        message={
+          <p className="mb-0">
+            ¿Desea finalizar este partido con el marcador{" "}
+            <strong>
+              {matchToFinish?.homeScore ?? 0} - {matchToFinish?.awayScore ?? 0}
+            </strong>
+            ? El marcador se muestra solo como referencia.
+          </p>
+        }
+        confirmLabel="Finalizar"
         isLoading={actionLoading}
-        onConfirm={handleCancel}
+        onConfirm={handleFinish}
         onCancel={() => {
-          if (!actionLoading) setMatchToCancel(null);
+          if (!actionLoading) setMatchToFinish(null);
         }}
       />
 
-      <MatchFinishModal
-        visible={Boolean(matchToFinish)}
-        match={matchToFinish}
-        submitting={actionLoading}
-        error={finishError}
-        onClose={() => {
-          if (!actionLoading) setMatchToFinish(null);
-        }}
-        onSubmit={handleFinish}
-      />
+
     </div>
   );
 }

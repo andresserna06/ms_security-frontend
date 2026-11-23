@@ -2,6 +2,7 @@ import {
   Match,
   MatchCreatePayload,
   MatchFinishPayload,
+  MatchResultPayload,
   MatchStatus,
   MatchUpdatePayload,
 } from "../models/Match";
@@ -101,8 +102,14 @@ export class MatchService implements IMatchService {
     return undefined;
   }
 
-  async cancel(id: number): Promise<Match | void> {
-    const data = await sportsRequest<any>(`/matches/${id}/cancel`, { method: "PATCH" });
+  async saveResult(id: number, payload: MatchResultPayload): Promise<Match | void> {
+    const data = await sportsRequest<any>(`/matches/${id}/result`, {
+      method: "PUT",
+      body: JSON.stringify({
+        homeScore: Number(payload.homeScore),
+        awayScore: Number(payload.awayScore),
+      }),
+    });
     if (data && typeof data === "object") return toMatch(data);
     return undefined;
   }

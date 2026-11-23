@@ -2,6 +2,7 @@ import {
   Match,
   MatchCreatePayload,
   MatchFinishPayload,
+  MatchResultPayload,
   MatchUpdatePayload,
 } from "../../models/Match";
 
@@ -12,6 +13,6 @@ export interface IMatchService {
   update(id: number, payload: MatchUpdatePayload): Promise<Match>;
   remove(id: number): Promise<void>;
   start(id: number): Promise<Match | void>;
-  cancel(id: number): Promise<Match | void>;
+  saveResult(id: number, payload: MatchResultPayload): Promise<Match | void>;
   finish(id: number, payload: MatchFinishPayload): Promise<Match | void>;
 }

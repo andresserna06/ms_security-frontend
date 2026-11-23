@@ -13,7 +13,6 @@ interface MatchesTableProps {
   errorMessage?: string;
   onStart: (match: Match) => void;
   onEdit: (match: Match) => void;
-  onCancel: (match: Match) => void;
   onDelete: (match: Match) => void;
   onFinish: (match: Match) => void;
 }
@@ -43,7 +42,6 @@ export default function MatchesTable({
   errorMessage = "No fue posible obtener los partidos.",
   onStart,
   onEdit,
-  onCancel,
   onDelete,
   onFinish,
 }: MatchesTableProps) {
@@ -91,23 +89,15 @@ export default function MatchesTable({
               <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => onEdit(match)}>
                 Editar
               </button>
-              <button type="button" className="btn btn-sm btn-outline-warning" onClick={() => onCancel(match)}>
-                Cancelar
-              </button>
               <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => onDelete(match)}>
                 Eliminar
               </button>
             </>
           ) : null}
           {match.status === "IN_PROGRESS" ? (
-            <>
-              <button type="button" className="btn btn-sm btn-outline-success" onClick={() => onFinish(match)}>
-                Finalizar
-              </button>
-              <button type="button" className="btn btn-sm btn-outline-warning" onClick={() => onCancel(match)}>
-                Cancelar
-              </button>
-            </>
+            <button type="button" className="btn btn-sm btn-outline-success" onClick={() => onFinish(match)}>
+              Finalizar
+            </button>
           ) : null}
         </div>
       ),
