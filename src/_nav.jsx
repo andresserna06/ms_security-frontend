@@ -88,10 +88,10 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Fases',
-    to: '/phases',
+    name: 'Fase final',
+    to: '/finals',
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/phases' },
+    permission: { method: 'GET', url: '/finals' },
   },
   {
     component: CNavItem,

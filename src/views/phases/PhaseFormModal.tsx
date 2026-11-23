@@ -3,18 +3,16 @@ import {
   FINAL_ROUND_OPTIONS,
   FinalRound,
   Phase,
-  PhaseType,
   getFinalRoundLabel,
 } from "../../models/Phase";
 import GenericModal from "../../components/common/GenericModal";
 import GenericButton from "../../components/common/GenericButton";
 import Alert from "../../components/common/Alert";
 
-export interface PhaseFormValues {
-  phaseType: PhaseType;
+export interface FinalPhaseFormValues {
   name: string;
   order: number;
-  finalRound?: FinalRound;
+  finalRound: FinalRound;
 }
 
 interface PhaseFormModalProps {
@@ -25,7 +23,7 @@ interface PhaseFormModalProps {
   error?: string | null;
   fieldErrors?: Record<string, string>;
   onClose: () => void;
-  onSubmit: (values: PhaseFormValues) => Promise<void>;
+  onSubmit: (values: FinalPhaseFormValues) => Promise<void>;
 }
 
 export default function PhaseFormModal({
@@ -38,39 +36,18 @@ export default function PhaseFormModal({
   onClose,
   onSubmit,
 }: PhaseFormModalProps) {
-  const [phaseType, setPhaseType] = useState<PhaseType>("GROUP");
-  const [name, setName] = useState<string>("");
   const [order, setOrder] = useState<string>("1");
   const [finalRound, setFinalRound] = useState<string>("");
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!visible) return;
-    const nextType = phase?.phaseType ?? "GROUP";
-    setPhaseType(nextType);
-    setName(phase?.name ?? "");
     setOrder(String(phase?.order ?? 1));
     setFinalRound(phase?.finalRound ?? "");
     setLocalErrors({});
   }, [visible, phase]);
 
-  const handlePhaseTypeChange = (value: PhaseType) => {
-    setPhaseType(value);
-    if (value === "FINAL") {
-      const round = (finalRound as FinalRound) || undefined;
-      setName(round ? getFinalRoundLabel(round) : "");
-    } else if (phase?.phaseType !== "GROUP") {
-      setName("");
-    }
-  };
-
-  const handleFinalRoundChange = (value: string) => {
-    setFinalRound(value);
-    const round = value as FinalRound;
-    setName(getFinalRoundLabel(round));
-  };
-
-  const validate = (): PhaseFormValues | null => {
+  const validate = (): FinalPhaseFormValues | null => {
     const errors: Record<string, string> = {};
     if (!phase && !selectedTournamentId) {
       errors.tournamentId = "Debes seleccionar un torneo.";
@@ -81,24 +58,18 @@ export default function PhaseFormModal({
       errors.order = "El orden debe ser un entero mayor o igual a 1.";
     }
 
-    if (phaseType === "GROUP") {
-      if (!name.trim()) {
-        errors.name = "El nombre es obligatorio.";
-      }
-    } else {
-      if (!finalRound) {
-        errors.finalRound = "Debes seleccionar una ronda.";
-      }
+    if (!finalRound) {
+      errors.finalRound = "Debes seleccionar una ronda.";
     }
 
     setLocalErrors(errors);
     if (Object.keys(errors).length > 0) return null;
 
+    const round = finalRound as FinalRound;
     return {
-      phaseType,
-      name: phaseType === "FINAL" ? getFinalRoundLabel(finalRound) : name.trim(),
+      name: getFinalRoundLabel(round),
       order: parsedOrder,
-      finalRound: phaseType === "FINAL" ? (finalRound as FinalRound) : undefined,
+      finalRound: round,
     };
   };
 
@@ -115,7 +86,7 @@ export default function PhaseFormModal({
   return (
     <GenericModal
       visible={visible}
-      title={isEdit ? "Editar fase" : "Crear fase"}
+      title={isEdit ? "Editar fase final" : "Crear fase final"}
       onClose={submitting ? () => {} : onClose}
       backdrop={submitting ? "static" : true}
       footer={
@@ -128,87 +99,51 @@ export default function PhaseFormModal({
           />
           <button
             type="submit"
-            form="phase-form"
+            form="final-phase-form"
             className="btn btn-sports-primary"
             disabled={submitting}
           >
-            {submitting ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear fase"}
+            {submitting ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear fase final"}
           </button>
         </>
       }
     >
-      <form id="phase-form" onSubmit={handleSubmit} noValidate>
+      <form id="final-phase-form" onSubmit={handleSubmit} noValidate>
         {error ? <Alert type="danger" message={error} onClose={() => {}} /> : null}
         {mergedErrors.tournamentId ? (
           <Alert type="danger" message={mergedErrors.tournamentId} onClose={() => {}} />
         ) : null}
 
         <div className="mb-3">
-          <label htmlFor="phase-type" className="form-label">
-            Tipo <span className="text-danger">*</span>
+          <label htmlFor="final-phase-round" className="form-label">
+            Ronda <span className="text-danger">*</span>
           </label>
           <select
-            id="phase-type"
-            className="form-select"
-            value={phaseType}
-            onChange={(e) => handlePhaseTypeChange(e.target.value as PhaseType)}
-            disabled={submitting || isEdit}
+            id="final-phase-round"
+            className={`form-select ${mergedErrors.finalRound ? "is-invalid" : ""}`}
+            value={finalRound}
+            onChange={(e) => setFinalRound(e.target.value)}
+            disabled={submitting}
           >
-            <option value="GROUP">Grupo</option>
-            <option value="FINAL">Final</option>
+            <option value="">Seleccione una ronda</option>
+            {FINAL_ROUND_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
+          {mergedErrors.finalRound ? (
+            <div className="invalid-feedback">{mergedErrors.finalRound}</div>
+          ) : null}
+          <div className="form-text">El nombre se completa automáticamente según la ronda.</div>
         </div>
 
-        {phaseType === "GROUP" ? (
-          <div className="mb-3">
-            <label htmlFor="phase-name" className="form-label">
-              Nombre <span className="text-danger">*</span>
-            </label>
-            <input
-              id="phase-name"
-              type="text"
-              className={`form-control ${mergedErrors.name ? "is-invalid" : ""}`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Grupo A"
-              disabled={submitting}
-            />
-            {mergedErrors.name ? (
-              <div className="invalid-feedback">{mergedErrors.name}</div>
-            ) : null}
-          </div>
-        ) : (
-          <div className="mb-3">
-            <label htmlFor="phase-final-round" className="form-label">
-              Ronda <span className="text-danger">*</span>
-            </label>
-            <select
-              id="phase-final-round"
-              className={`form-select ${mergedErrors.finalRound ? "is-invalid" : ""}`}
-              value={finalRound}
-              onChange={(e) => handleFinalRoundChange(e.target.value)}
-              disabled={submitting}
-            >
-              <option value="">Seleccione una ronda</option>
-              {FINAL_ROUND_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {mergedErrors.finalRound ? (
-              <div className="invalid-feedback">{mergedErrors.finalRound}</div>
-            ) : null}
-            <div className="form-text">El nombre se completa automáticamente según la ronda.</div>
-          </div>
-        )}
-
         <div className="mb-3">
-          <label htmlFor="phase-order" className="form-label">
+          <label htmlFor="final-phase-order" className="form-label">
             Orden <span className="text-danger">*</span>
           </label>
           <input
-            id="phase-order"
+            id="final-phase-order"
             type="number"
             min={1}
             className={`form-control ${mergedErrors.order ? "is-invalid" : ""}`}

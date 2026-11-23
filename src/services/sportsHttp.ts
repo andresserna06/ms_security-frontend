@@ -7,12 +7,19 @@ export const SPORTS_BASE_URL = (
 export class SportsApiError extends Error {
   status: number;
   errorCase: string | null;
+  fieldErrors?: Record<string, string>;
 
-  constructor(message: string, status: number, errorCase: string | null = null) {
+  constructor(
+    message: string,
+    status: number,
+    errorCase: string | null = null,
+    fieldErrors?: Record<string, string>,
+  ) {
     super(message);
     this.name = "SportsApiError";
     this.status = status;
     this.errorCase = errorCase;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -56,6 +63,7 @@ export async function sportsRequest<T>(
   if (!response.ok) {
     let message = "Error al procesar la solicitud en el servicio deportivo.";
     let errorCase: string | null = null;
+    let fieldErrors: Record<string, string> | undefined;
 
     if (data && typeof data === "object") {
       errorCase = typeof data.errorCase === "string" ? data.errorCase : null;
@@ -64,11 +72,43 @@ export async function sportsRequest<T>(
       } else if (typeof data.message === "string" && data.message.trim()) {
         message = data.message;
       }
+
+      const rawFieldErrors =
+        data.fieldErrors && typeof data.fieldErrors === "object"
+          ? data.fieldErrors
+          : data.errors && typeof data.errors === "object" && !Array.isArray(data.errors)
+            ? data.errors
+            : null;
+
+      if (rawFieldErrors) {
+        const entries = Object.entries(rawFieldErrors).filter(
+          ([, value]) => typeof value === "string" && value.trim().length > 0,
+        ) as [string, string][];
+        if (entries.length > 0) {
+          fieldErrors = Object.fromEntries(entries);
+          if (message === "Error al procesar la solicitud en el servicio deportivo.") {
+            message = entries.map(([, value]) => value).join(". ");
+          }
+        }
+      } else if (response.status === 400) {
+        const entries = Object.entries(data).filter(
+          ([key, value]) =>
+            !["message", "errorCase", "statusCode", "error"].includes(key) &&
+            typeof value === "string" &&
+            value.trim().length > 0,
+        ) as [string, string][];
+        if (entries.length > 0) {
+          fieldErrors = Object.fromEntries(entries);
+          if (message === "Error al procesar la solicitud en el servicio deportivo.") {
+            message = entries.map(([, value]) => value).join(". ");
+          }
+        }
+      }
     } else if (typeof data === "string" && data.trim()) {
       message = data;
     }
 
-    throw new SportsApiError(message, response.status, errorCase);
+    throw new SportsApiError(message, response.status, errorCase, fieldErrors);
   }
 
   return data as T;

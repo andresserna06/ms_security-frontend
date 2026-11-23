@@ -69,10 +69,10 @@ export const routes = [
     permission: { method: 'GET', url: '/tournaments' },
   },
   {
-    path: '/phases',
-    name: 'Fases',
+    path: '/finals',
+    name: 'Fase final',
     element: PhasesPage,
-    permission: { method: 'GET', url: '/phases' },
+    permission: { method: 'GET', url: '/finals' },
   },
   {
     path: '/player-profile',
