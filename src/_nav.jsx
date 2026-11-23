@@ -11,6 +11,7 @@ import {
   cilFindInPage,
   cilClipboard,
   cilLayers,
+  cilMediaPlay,
 } from '@coreui/icons'
 import authService from './services/authService'
 import { canAccessRoute } from './utils/routeAccess'
@@ -92,6 +93,13 @@ const _nav = [
     to: '/phases',
     icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
     permission: { method: 'GET', url: '/phases' },
+  },
+  {
+    component: CNavItem,
+    name: 'Partidos',
+    to: '/matches',
+    icon: <CIcon icon={cilMediaPlay} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/matches' },
   },
   {
     component: CNavItem,

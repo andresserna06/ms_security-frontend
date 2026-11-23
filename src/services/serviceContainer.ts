@@ -14,6 +14,7 @@ import { RegistrationService } from "./registrationService";
 import { PhaseService } from "./phaseService";
 import { GroupService } from "./groupService";
 import { FinalPhaseService } from "./finalPhaseService";
+import { MatchService } from "./matchService";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
 import { AzureOAuthProviderService } from "./azureOAuthProviderService";
 import { GithubOAuthProviderService } from "./githubOAuthProviderService";
@@ -48,6 +49,7 @@ export const serviceContainer = {
   phaseService: new PhaseService(),
   groupService: new GroupService(),
   finalPhaseService: new FinalPhaseService(),
+  matchService: new MatchService(),
 };
 
 export type ServiceContainer = typeof serviceContainer;
