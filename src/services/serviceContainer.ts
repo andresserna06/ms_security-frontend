@@ -9,6 +9,7 @@ import { PlayerSkillService } from "./playerSkillService";
 import { TeamService } from "./teamService";
 import { PlayerContractService } from "./playerContractService";
 import { PlayerProfileService } from "./playerProfileService";
+import { MatchResultService } from "./matchResultService";
 import { TournamentService } from "./tournamentService";
 import { RegistrationService } from "./registrationService";
 import { PhaseService } from "./phaseService";
@@ -44,6 +45,7 @@ export const serviceContainer = {
   teamService: new TeamService(),
   playerContractService: new PlayerContractService(),
   playerProfileService: new PlayerProfileService(),
+  matchResultService: new MatchResultService(),
   tournamentService: new TournamentService(),
   registrationService: new RegistrationService(),
   phaseService: new PhaseService(),

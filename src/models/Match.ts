@@ -8,6 +8,7 @@ export interface Match {
   awayScore: number | null;
   homeTeamId: number | null;
   awayTeamId: number | null;
+  venueId?: number | null;
   phaseId: number;
 }
 
@@ -32,6 +33,16 @@ export interface MatchResultPayload {
 export interface MatchFinishPayload {
   homeScore: number;
   awayScore: number;
+}
+
+export interface UpdateMatchResultPayload {
+  homeScore: number;
+  awayScore: number;
+}
+
+export interface FinishMatchPayload {
+  homeScore?: number;
+  awayScore?: number;
 }
 
 export const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {

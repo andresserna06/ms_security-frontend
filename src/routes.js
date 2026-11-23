@@ -17,6 +17,7 @@ const RegistrationsPage = React.lazy(() => import('./views/registrations/Registr
 const PhasesPage = React.lazy(() => import('./views/phases/PhasesPage'))
 const MatchesPage = React.lazy(() => import('./views/matches/MatchesPage'))
 const PlayerProfilePage = React.lazy(() => import('./views/player-profile/PlayerProfilePage'))
+const MatchResultsPage = React.lazy(() => import('./views/match-results/MatchResultsPage'))
 
 export const routes = [
   { path: '/', exact: true, name: 'Inicio' },
@@ -90,6 +91,12 @@ export const routes = [
     path: '/player-profile/:id',
     name: 'Perfil Deportivo',
     element: PlayerProfilePage,
+  },
+  {
+    path: '/match-results',
+    name: 'Resultados y Anotaciones',
+    element: MatchResultsPage,
+    permission: { method: 'GET', url: '/match-results' },
   },
 ]
 
