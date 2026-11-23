@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  FINAL_ROUND_OPTIONS,
-  FinalRound,
-  Phase,
-  getFinalRoundLabel,
-} from "../../models/Phase";
+import { FINAL_ROUND_OPTIONS, FinalRound, Phase } from "../../models/Phase";
 import GenericModal from "../../components/common/GenericModal";
 import GenericButton from "../../components/common/GenericButton";
 import Alert from "../../components/common/Alert";
 
 export interface FinalPhaseFormValues {
-  name: string;
   order: number;
   finalRound: FinalRound;
 }
@@ -19,6 +13,7 @@ interface PhaseFormModalProps {
   visible: boolean;
   phase: Phase | null;
   selectedTournamentId: string;
+  suggestedOrder: number;
   submitting: boolean;
   error?: string | null;
   fieldErrors?: Record<string, string>;
@@ -30,6 +25,7 @@ export default function PhaseFormModal({
   visible,
   phase,
   selectedTournamentId,
+  suggestedOrder,
   submitting,
   error,
   fieldErrors = {},
@@ -42,10 +38,10 @@ export default function PhaseFormModal({
 
   useEffect(() => {
     if (!visible) return;
-    setOrder(String(phase?.order ?? 1));
+    setOrder(String(phase?.order ?? suggestedOrder));
     setFinalRound(phase?.finalRound ?? "");
     setLocalErrors({});
-  }, [visible, phase]);
+  }, [visible, phase, suggestedOrder]);
 
   const validate = (): FinalPhaseFormValues | null => {
     const errors: Record<string, string> = {};
@@ -65,11 +61,9 @@ export default function PhaseFormModal({
     setLocalErrors(errors);
     if (Object.keys(errors).length > 0) return null;
 
-    const round = finalRound as FinalRound;
     return {
-      name: getFinalRoundLabel(round),
       order: parsedOrder,
-      finalRound: round,
+      finalRound: finalRound as FinalRound,
     };
   };
 
@@ -135,7 +129,6 @@ export default function PhaseFormModal({
           {mergedErrors.finalRound ? (
             <div className="invalid-feedback">{mergedErrors.finalRound}</div>
           ) : null}
-          <div className="form-text">El nombre se completa automáticamente según la ronda.</div>
         </div>
 
         <div className="mb-3">
@@ -153,7 +146,11 @@ export default function PhaseFormModal({
           />
           {mergedErrors.order ? (
             <div className="invalid-feedback">{mergedErrors.order}</div>
-          ) : null}
+          ) : (
+            <div className="form-text">
+              {phase ? "Ajusta el orden si es necesario." : `Sugerido: ${suggestedOrder}. Mayor a 2.`}
+            </div>
+          )}
         </div>
       </form>
     </GenericModal>

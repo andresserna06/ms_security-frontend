@@ -49,12 +49,13 @@ export interface GroupPhaseUpdatePayload {
   order?: number;
 }
 
-export interface FinalPhaseCreatePayload extends PhaseCreatePayload {
+export interface FinalPhaseCreatePayload {
+  order: number;
+  tournamentId: number;
   finalRound: FinalRound;
 }
 
 export interface FinalPhaseUpdatePayload {
-  name?: string;
   order?: number;
   finalRound?: FinalRound;
 }

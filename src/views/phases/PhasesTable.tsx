@@ -19,10 +19,6 @@ export default function PhasesTable({
 }: PhasesTableProps) {
   const columns: TableColumn<Phase>[] = [
     {
-      header: "Nombre",
-      render: (phase) => phase.name,
-    },
-    {
       header: "Orden",
       render: (phase) => String(phase.order),
     },

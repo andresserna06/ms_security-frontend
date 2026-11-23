@@ -47,7 +47,7 @@ export default function PhaseFilters({
           className="form-control"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Nombre, orden o ronda"
+          placeholder="Orden o ronda"
         />
       </div>
     </div>

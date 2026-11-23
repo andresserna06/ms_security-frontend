@@ -94,6 +94,14 @@ export default function PhasesPage() {
     void loadPhases(selectedTournamentId);
   }, [loadPhases, selectedTournamentId]);
 
+  const suggestedOrder = useMemo(() => {
+    const maxOrder = (phases ?? []).reduce(
+      (max, phase) => Math.max(max, phase.order),
+      0,
+    );
+    return maxOrder + 1;
+  }, [phases]);
+
   const filteredPhases = useMemo(() => {
     if (!phases) return null;
     const query = searchTerm.trim().toLowerCase();
@@ -101,13 +109,9 @@ export default function PhasesPage() {
       .filter((phase) => {
         if (!query) return true;
         const roundLabel = getFinalRoundLabel(phase.finalRound).toLowerCase();
-        return (
-          phase.name.toLowerCase().includes(query) ||
-          String(phase.order).includes(query) ||
-          roundLabel.includes(query)
-        );
+        return String(phase.order).includes(query) || roundLabel.includes(query);
       })
-      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+      .sort((a, b) => a.order - b.order);
   }, [phases, searchTerm]);
 
   const openCreate = () => {
@@ -132,14 +136,12 @@ export default function PhasesPage() {
     try {
       if (editingPhase) {
         await finalPhaseService.update(editingPhase.id, {
-          name: values.name,
           order: values.order,
           finalRound: values.finalRound,
         });
         setSuccess("Fase final actualizada correctamente.");
       } else {
         await finalPhaseService.create({
-          name: values.name,
           order: values.order,
           tournamentId: Number(selectedTournamentId),
           finalRound: values.finalRound,
@@ -239,6 +241,7 @@ export default function PhasesPage() {
         visible={showForm}
         phase={editingPhase}
         selectedTournamentId={selectedTournamentId}
+        suggestedOrder={suggestedOrder}
         submitting={submitting}
         error={formError}
         fieldErrors={formFieldErrors}

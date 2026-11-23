@@ -1,17 +1,11 @@
 import {
   FinalPhaseCreatePayload,
   FinalPhaseUpdatePayload,
-  FinalRound,
-  getFinalRoundLabel,
   Phase,
 } from "../models/Phase";
 import { IFinalPhaseService } from "./interfaces/IFinalPhaseService";
 import { sportsRequest } from "./sportsHttp";
 import { toPhase } from "./phaseService";
-
-function resolveFinalName(finalRound: FinalRound, name?: string): string {
-  return getFinalRoundLabel(finalRound) || name?.trim() || "Final";
-}
 
 export class FinalPhaseService implements IFinalPhaseService {
   private readonly endpoint = "/finals";
@@ -38,7 +32,6 @@ export class FinalPhaseService implements IFinalPhaseService {
     const data = await sportsRequest<any>(this.endpoint, {
       method: "POST",
       body: JSON.stringify({
-        name: resolveFinalName(payload.finalRound, payload.name),
         order: Number(payload.order),
         tournamentId: Number(payload.tournamentId),
         finalRound: payload.finalRound,
@@ -48,14 +41,9 @@ export class FinalPhaseService implements IFinalPhaseService {
   }
 
   async update(id: number, payload: FinalPhaseUpdatePayload): Promise<Phase> {
-    const body: FinalPhaseUpdatePayload = {};
+    const body: Record<string, unknown> = {};
     if (payload.order !== undefined) body.order = Number(payload.order);
-    if (payload.finalRound !== undefined) {
-      body.finalRound = payload.finalRound;
-      body.name = resolveFinalName(payload.finalRound, payload.name);
-    } else if (payload.name !== undefined) {
-      body.name = payload.name.trim();
-    }
+    if (payload.finalRound !== undefined) body.finalRound = payload.finalRound;
     const data = await sportsRequest<any>(`${this.endpoint}/${id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
