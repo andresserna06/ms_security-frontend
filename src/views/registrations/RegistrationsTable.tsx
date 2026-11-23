@@ -20,6 +20,7 @@ export interface RegistrationsTableProps {
   isLoading: boolean;
   errorMessage?: string;
   onWithdraw: (registration: Registration) => void;
+  onConfirm: (registration: Registration) => void;
 }
 
 export default function RegistrationsTable({
@@ -27,6 +28,7 @@ export default function RegistrationsTable({
   isLoading,
   errorMessage = "No fue posible obtener las inscripciones.",
   onWithdraw,
+  onConfirm,
 }: RegistrationsTableProps) {
   const columns: TableColumn<Registration>[] = [
     {
@@ -59,11 +61,21 @@ export default function RegistrationsTable({
           Number.isInteger(registration.teamId) && registration.teamId > 0;
 
         if (registration.status === "WITHDRAWN") {
-          return registration.withdrawnAt ? (
-            <span className="text-body-secondary small">
-              Retirada el {formatDate(registration.withdrawnAt)}
-            </span>
-          ) : null;
+          if (!hasValidTeamId) {
+            return <span className="text-body-secondary small">-</span>;
+          }
+          return (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-success"
+              onClick={(e) => {
+                e.stopPropagation();
+                onConfirm(registration);
+              }}
+            >
+              Reintegrar
+            </button>
+          );
         }
 
         if (!hasValidTeamId) {

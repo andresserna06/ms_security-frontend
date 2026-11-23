@@ -129,4 +129,18 @@ export class RegistrationService implements IRegistrationService {
     }
     return undefined;
   }
+
+  async confirm(tournamentId: number, teamId: number): Promise<Registration | void> {
+    const data = await sportsRequest<any>(
+      `/tournaments/${tournamentId}/registrations/${teamId}/confirm`,
+      {
+        method: "PATCH",
+      },
+    );
+    if (data && typeof data === "object") {
+      const registration = toRegistration(data, tournamentId);
+      return registration ?? undefined;
+    }
+    return undefined;
+  }
 }
