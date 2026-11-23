@@ -14,6 +14,7 @@ const PlayersPage = React.lazy(() => import('./views/players/PlayersPage'))
 const PlayerSkillsPage = React.lazy(() => import('./views/player-skills/PlayerSkillsPage'))
 const ContractsPage = React.lazy(() => import('./views/contracts/ContractsPage'))
 const PlayerProfilePage = React.lazy(() => import('./views/player-profile/PlayerProfilePage'))
+const MatchResultsPage = React.lazy(() => import('./views/match-results/MatchResultsPage'))
 
 export const routes = [
   { path: '/', exact: true, name: 'Inicio' },
@@ -69,6 +70,12 @@ export const routes = [
     path: '/player-profile/:id',
     name: 'Perfil Deportivo',
     element: PlayerProfilePage,
+  },
+  {
+    path: '/match-results',
+    name: 'Resultados y Anotaciones',
+    element: MatchResultsPage,
+    permission: { method: 'GET', url: '/match-results' },
   },
 ]
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import CIcon from '@coreui/icons-react'
 import { CNavItem, CNavTitle } from '@coreui/react'
-import { cilSpeedometer, cilUser, cilPeople, cilLockLocked, cilStar, cilNotes, cilFindInPage } from '@coreui/icons'
+import { cilSpeedometer, cilUser, cilPeople, cilLockLocked, cilStar, cilNotes, cilFindInPage, cilCheckCircle } from '@coreui/icons'
 import authService from './services/authService'
 import { canAccessRoute } from './utils/routeAccess'
 
@@ -74,6 +74,13 @@ const _nav = [
     name: 'Perfil Deportivo',
     to: '/player-profile',
     icon: <CIcon icon={cilFindInPage} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Resultados y Anotaciones',
+    to: '/match-results',
+    icon: <CIcon icon={cilCheckCircle} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/match-results' },
   },
 ]
 
