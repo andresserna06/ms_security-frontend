@@ -124,7 +124,7 @@ export default function AssignSkillModal({
             <option value="">Selecciona una habilidad...</option>
             {availableSkills.map((skill) => (
               <option key={skill.id} value={skill.id}>
-                {skill.name} — {skill.description}
+                {skill.name}
               </option>
             ))}
           </select>

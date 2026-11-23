@@ -6,6 +6,8 @@ import { ProfileService } from "./profileService";
 import { PlayerService } from "./playerService";
 import { SkillService } from "./skillService";
 import { PlayerSkillService } from "./playerSkillService";
+import { TeamService } from "./teamService";
+import { PlayerContractService } from "./playerContractService";
 import { GoogleOAuthProviderService } from "./googleOAuthProviderService";
 import { AzureOAuthProviderService } from "./azureOAuthProviderService";
 import { GithubOAuthProviderService } from "./githubOAuthProviderService";
@@ -32,6 +34,8 @@ export const serviceContainer = {
   playerService: new PlayerService(),
   skillService: new SkillService(),
   playerSkillService: new PlayerSkillService(),
+  teamService: new TeamService(),
+  playerContractService: new PlayerContractService(),
 };
 
 export type ServiceContainer = typeof serviceContainer;

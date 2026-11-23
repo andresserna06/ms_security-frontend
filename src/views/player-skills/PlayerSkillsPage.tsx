@@ -86,12 +86,10 @@ export default function PlayerSkillsPage({
     [playerSkills],
   );
 
-  const formatPlayerLabel = useCallback(
+  const formatPlayerName = useCallback(
     (player: Player): string => {
       const user = usersById.get(Number(player.userId));
-      const name = user?.name || `Usuario #${player.userId}`;
-      const statusSuffix = player.active ? "" : " [Inactivo]";
-      return `${name} — ${player.document}${statusSuffix}`;
+      return user?.name || `Usuario #${player.userId}`;
     },
     [usersById],
   );
@@ -320,7 +318,7 @@ export default function PlayerSkillsPage({
                   ) : null}
                   {players.map((player) => (
                     <option key={player.id} value={player.id}>
-                      {formatPlayerLabel(player)}
+                      {formatPlayerName(player)}
                     </option>
                   ))}
                 </select>
@@ -351,22 +349,19 @@ export default function PlayerSkillsPage({
             ) : null}
 
             {selectedPlayer ? (
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-3 p-2 bg-light rounded border">
-                <span className="fw-semibold">
-                  {usersById.get(Number(selectedPlayer.userId))?.name ||
-                    `Usuario #${selectedPlayer.userId}`}
+              <div className="d-flex flex-wrap align-items-center gap-3 mb-3 p-2 px-3 bg-light rounded border small">
+                <span>
+                  <span className="text-body-secondary">Documento:</span>{" "}
+                  <strong>{selectedPlayer.document}</strong>
                 </span>
-                <span className="text-body-secondary small">
-                  Doc: {selectedPlayer.document}
+                <span>
+                  <span className="text-body-secondary">Posición:</span>{" "}
+                  <strong>{selectedPlayer.position || "Sin definir"}</strong>
                 </span>
-                {selectedPlayer.position ? (
-                  <span className="text-body-secondary small">
-                    • {selectedPlayer.position}
-                  </span>
-                ) : null}
                 <span
-                  className={`badge rounded-pill ms-auto ${selectedPlayer.active ? "badge-sports" : "bg-secondary"
-                    }`}
+                  className={`badge rounded-pill ms-auto ${
+                    selectedPlayer.active ? "badge-sports" : "bg-secondary"
+                  }`}
                 >
                   {selectedPlayer.active ? "Activo" : "Inactivo"}
                 </span>
@@ -436,7 +431,7 @@ export default function PlayerSkillsPage({
 
       <AssignSkillModal
         visible={assignModalVisible}
-        playerLabel={selectedPlayer ? formatPlayerLabel(selectedPlayer) : ""}
+        playerLabel={selectedPlayer ? formatPlayerName(selectedPlayer) : ""}
         skills={skills}
         assignedSkillIds={assignedSkillIds}
         submitting={assigning}
