@@ -21,12 +21,12 @@ function sanitizeScoringEventPayload(
 export class MatchResultService implements IMatchResultService {
   async getAllMatches(): Promise<Match[]> {
     const data = await sportsRequest<Match[]>("/matches");
-    return Array.isArray(data) ? data.map((m) => new Match(m)) : [];
+    return Array.isArray(data) ? data.map((m) => ({ ...m })) : [];
   }
 
   async getMatchById(id: number): Promise<Match> {
     const data = await sportsRequest<Match>(`/matches/${id}`);
-    return new Match(data);
+    return { ...data };
   }
 
   async updateResult(
@@ -40,7 +40,7 @@ export class MatchResultService implements IMatchResultService {
         awayScore: Number(payload.awayScore),
       }),
     });
-    return new Match(data);
+    return { ...data };
   }
 
   async finishMatch(
@@ -65,7 +65,7 @@ export class MatchResultService implements IMatchResultService {
       method: "PATCH",
       body: JSON.stringify(body),
     });
-    return new Match(data);
+    return { ...data };
   }
 
   async getScoringEvents(matchId: number): Promise<ScoringEvent[]> {
