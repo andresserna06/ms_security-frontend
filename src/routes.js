@@ -122,11 +122,13 @@ export const routes = [
     path: '/player-profile',
     name: 'Perfil Deportivo',
     element: PlayerProfilePage,
+    permission: { method: 'GET', url: '/players/{id}/profile' },
   },
   {
     path: '/player-profile/:id',
     name: 'Perfil Deportivo',
     element: PlayerProfilePage,
+    permission: { method: 'GET', url: '/players/{id}/profile' },
   },
   {
     path: '/match-results',

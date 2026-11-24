@@ -139,6 +139,7 @@ const _nav = [
     name: 'Perfil Deportivo',
     to: '/player-profile',
     icon: <CIcon icon={cilFindInPage} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/players/{id}/profile' },
   },
   {
     component: CNavItem,
