@@ -16,6 +16,7 @@ import { Role } from "../../models/Role";
 import { UserRole } from "../../models/UserRole";
 import { User } from "../../models/User";
 import { IUserRoleService } from "../../services/interfaces/IUserRoleService";
+import { isFanRoleName, registerFan } from "../../services/fanService";
 
 interface UserRolesManagerProps {
   user: User;
@@ -76,11 +77,14 @@ export default function UserRolesManager({
       return;
     }
 
+    const roleId = Number(selectedRoleId);
+    const selectedRole = allRoles.find((role) => role.id === roleId);
+
     setSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
 
-    const assigned = await service.assignRole(user.id, Number(selectedRoleId));
+    const assigned = await service.assignRole(user.id, roleId);
 
     if (assigned === null) {
       setErrorMessage("No fue posible asignar el rol.");
@@ -88,8 +92,23 @@ export default function UserRolesManager({
       return;
     }
 
+    let fanSyncError: string | null = null;
+    if (isFanRoleName(selectedRole?.name)) {
+      try {
+        await registerFan(user.id);
+      } catch (err: any) {
+        fanSyncError =
+          err?.message ||
+          "El rol fue asignado, pero no se pudo registrar al aficionado en ms_sports.";
+      }
+    }
+
     await loadRolesData();
-    setSuccessMessage("Rol asignado correctamente al usuario.");
+    if (fanSyncError) {
+      setErrorMessage(fanSyncError);
+    } else {
+      setSuccessMessage("Rol asignado correctamente al usuario.");
+    }
     setSubmitting(false);
     onRolesUpdated();
   };
