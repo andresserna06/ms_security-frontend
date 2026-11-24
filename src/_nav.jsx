@@ -76,7 +76,7 @@ const _nav = [
     name: 'Equipos y Deportes',
     to: '/team-sports',
     icon: <CIcon icon={cilBasketball} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/teams' },
+    permission: { method: 'GET', url: '/teams/{teamId}/sports' },
   },
   {
     component: CNavItem,
@@ -90,7 +90,7 @@ const _nav = [
     name: 'Desarrollo del Torneo',
     to: '/tournament-overview',
     icon: <CIcon icon={cilSitemap} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/tournaments' },
+    permission: { method: 'GET', url: '/tournaments/{id}/overview' },
   },
   {
     component: CNavItem,
@@ -104,21 +104,21 @@ const _nav = [
     name: 'Habilidades de Jugadores',
     to: '/player-skills',
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/player-skills' },
+    permission: { method: 'GET', url: '/players/{playerId}/skills' },
   },
   {
     component: CNavItem,
     name: 'Contratos',
     to: '/contracts',
     icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/contracts' },
+    permission: { method: 'GET', url: '/teams/{teamId}/players' },
   },
   {
     component: CNavItem,
     name: 'Inscripciones',
     to: '/registrations',
     icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/tournaments' },
+    permission: { method: 'GET', url: '/tournaments/{tournamentId}/registrations' },
   },
   {
     component: CNavItem,
@@ -146,7 +146,7 @@ const _nav = [
     name: 'Resultados y Anotaciones',
     to: '/match-results',
     icon: <CIcon icon={cilCheckCircle} customClassName="nav-icon" />,
-    permission: { method: 'GET', url: '/match-results' },
+    permission: { method: 'GET', url: '/matches/{id}/scoring-events' },
   },
 ]
 

@@ -62,7 +62,7 @@ export const routes = [
     path: '/team-sports',
     name: 'Equipos y Deportes',
     element: TeamSportsPage,
-    permission: { method: 'GET', url: '/teams' },
+    permission: { method: 'GET', url: '/teams/{teamId}/sports' },
   },
   {
     path: '/tournaments',
@@ -74,13 +74,13 @@ export const routes = [
     path: '/tournament-overview',
     name: 'Desarrollo del Torneo',
     element: TournamentOverviewPage,
-    permission: { method: 'GET', url: '/tournaments' },
+    permission: { method: 'GET', url: '/tournaments/{id}/overview' },
   },
   {
     path: '/tournament-overview/:id',
     name: 'Desarrollo del Torneo',
     element: TournamentOverviewPage,
-    permission: { method: 'GET', url: '/tournaments' },
+    permission: { method: 'GET', url: '/tournaments/{id}/overview' },
   },
   {
     path: '/players',
@@ -92,19 +92,19 @@ export const routes = [
     path: '/player-skills',
     name: 'Habilidades de Jugadores',
     element: PlayerSkillsPage,
-    permission: { method: 'GET', url: '/player-skills' },
+    permission: { method: 'GET', url: '/players/{playerId}/skills' },
   },
   {
     path: '/contracts',
     name: 'Contratos',
     element: ContractsPage,
-    permission: { method: 'GET', url: '/contracts' },
+    permission: { method: 'GET', url: '/teams/{teamId}/players' },
   },
   {
     path: '/registrations',
     name: 'Inscripciones',
     element: RegistrationsPage,
-    permission: { method: 'GET', url: '/tournaments' },
+    permission: { method: 'GET', url: '/tournaments/{tournamentId}/registrations' },
   },
   {
     path: '/finals',
@@ -134,7 +134,7 @@ export const routes = [
     path: '/match-results',
     name: 'Resultados y Anotaciones',
     element: MatchResultsPage,
-    permission: { method: 'GET', url: '/match-results' },
+    permission: { method: 'GET', url: '/matches/{id}/scoring-events' },
   },
 ]
 
