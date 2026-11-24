@@ -12,6 +12,7 @@ export interface IMatchResultService {
     matchId: number,
     payload: UpdateMatchResultPayload,
   ): Promise<Match>;
+  startMatch(matchId: number): Promise<Match>;
   finishMatch(matchId: number, payload?: FinishMatchPayload): Promise<Match>;
   getScoringEvents(matchId: number): Promise<ScoringEvent[]>;
   createScoringEvent(

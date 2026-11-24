@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CBadge } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import { cilCheckCircle, cilSave } from "@coreui/icons";
+import { cilCheckCircle, cilMediaPlay, cilSave } from "@coreui/icons";
 import {
   FinishMatchPayload,
   Match,
@@ -15,8 +15,10 @@ export interface MatchScoreCardProps {
   awayTeamName: string;
   isBlocked: boolean;
   savingResult: boolean;
+  startingMatch: boolean;
   finishingMatch: boolean;
   onSaveResult: (payload: UpdateMatchResultPayload) => Promise<void>;
+  onStartMatch: () => Promise<void>;
   onRequestFinish: (payload: FinishMatchPayload) => void;
 }
 
@@ -49,8 +51,10 @@ export default function MatchScoreCard({
   awayTeamName,
   isBlocked,
   savingResult,
+  startingMatch,
   finishingMatch,
   onSaveResult,
+  onStartMatch,
   onRequestFinish,
 }: MatchScoreCardProps) {
   const [homeScore, setHomeScore] = useState<string>(
@@ -116,10 +120,12 @@ export default function MatchScoreCard({
     label: match.status,
     color: "secondary" as const,
   };
+  const canStart = !isBlocked && match.status === "SCHEDULED";
   const canFinish =
     !isBlocked &&
     match.status !== "FINISHED" &&
     match.status !== "CANCELLED";
+  const busy = savingResult || startingMatch || finishingMatch;
 
   return (
     <div className="card shadow-sm mb-3">
@@ -152,7 +158,7 @@ export default function MatchScoreCard({
                 aria-label="Marcador local"
                 value={homeScore}
                 onChange={(e) => setHomeScore(e.target.value)}
-                disabled={isBlocked || savingResult || finishingMatch}
+                disabled={isBlocked || busy}
               />
             </div>
 
@@ -174,7 +180,7 @@ export default function MatchScoreCard({
                 aria-label="Marcador visitante"
                 value={awayScore}
                 onChange={(e) => setAwayScore(e.target.value)}
-                disabled={isBlocked || savingResult || finishingMatch}
+                disabled={isBlocked || busy}
               />
             </div>
           </div>
@@ -186,10 +192,24 @@ export default function MatchScoreCard({
           ) : null}
 
           <div className="d-flex flex-wrap justify-content-center gap-2">
+            {canStart ? (
+              <button
+                type="button"
+                className="btn btn-sports-edit d-inline-flex align-items-center gap-2"
+                disabled={busy}
+                onClick={onStartMatch}
+              >
+                <CIcon icon={cilMediaPlay} size="sm" />
+                <span>
+                  {startingMatch ? "Iniciando..." : "Iniciar partido"}
+                </span>
+              </button>
+            ) : null}
+
             <button
               type="submit"
               className="btn btn-sports-primary d-inline-flex align-items-center gap-2"
-              disabled={isBlocked || savingResult || finishingMatch}
+              disabled={isBlocked || busy}
             >
               <CIcon icon={cilSave} size="sm" />
               <span>
@@ -200,7 +220,7 @@ export default function MatchScoreCard({
             <button
               type="button"
               className="btn btn-sports-deactivate d-inline-flex align-items-center gap-2"
-              disabled={!canFinish || savingResult || finishingMatch}
+              disabled={!canFinish || busy}
               onClick={handleFinishClick}
             >
               <CIcon icon={cilCheckCircle} size="sm" />

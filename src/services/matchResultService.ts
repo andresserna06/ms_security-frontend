@@ -43,6 +43,13 @@ export class MatchResultService implements IMatchResultService {
     return { ...data };
   }
 
+  async startMatch(matchId: number): Promise<Match> {
+    const data = await sportsRequest<Match>(`/matches/${matchId}/start`, {
+      method: "PATCH",
+    });
+    return { ...data };
+  }
+
   async finishMatch(
     matchId: number,
     payload?: FinishMatchPayload,

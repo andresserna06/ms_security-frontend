@@ -54,6 +54,7 @@ export default function MatchResultsPage({
   const [success, setSuccess] = useState<string | null>(null);
 
   const [savingResult, setSavingResult] = useState<boolean>(false);
+  const [startingMatch, setStartingMatch] = useState<boolean>(false);
   const [pendingFinishPayload, setPendingFinishPayload] =
     useState<FinishMatchPayload | null>(null);
   const [finishingMatch, setFinishingMatch] = useState<boolean>(false);
@@ -184,7 +185,30 @@ export default function MatchResultsPage({
     selectedMatch?.homeTeamId && selectedMatch?.awayTeamId,
   );
   const isCancelled = selectedMatch?.status === "CANCELLED";
+  const isScheduled = selectedMatch?.status === "SCHEDULED";
   const isBlocked = !selectedMatch || isCancelled || !hasBothTeams;
+  const areEventsBlocked = isBlocked || isScheduled;
+
+  const handleStartMatch = async () => {
+    if (!selectedMatchId) return;
+    setStartingMatch(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updated = await matchResultService.startMatch(selectedMatchId);
+      setSelectedMatch(updated);
+      setMatches((prev) =>
+        prev.map((m) => (m.id === updated.id ? updated : m)),
+      );
+      setSuccess(
+        "Partido iniciado correctamente. Ya puedes registrar anotaciones.",
+      );
+    } catch (err: any) {
+      setError(err?.message || "No fue posible iniciar el partido.");
+    } finally {
+      setStartingMatch(false);
+    }
+  };
 
   const handleSaveResult = async (payload: UpdateMatchResultPayload) => {
     if (!selectedMatchId) return;
@@ -367,8 +391,10 @@ export default function MatchResultsPage({
             awayTeamName={getTeamName(selectedMatch.awayTeamId)}
             isBlocked={isBlocked}
             savingResult={savingResult}
+            startingMatch={startingMatch}
             finishingMatch={finishingMatch}
             onSaveResult={handleSaveResult}
+            onStartMatch={handleStartMatch}
             onRequestFinish={(payload) => setPendingFinishPayload(payload)}
           />
 
@@ -383,7 +409,7 @@ export default function MatchResultsPage({
               <button
                 type="button"
                 className="btn btn-sm btn-sports-primary d-inline-flex align-items-center gap-1"
-                disabled={isBlocked}
+                disabled={areEventsBlocked}
                 onClick={() => {
                   setEventToEdit(null);
                   setSuccess(null);
@@ -395,6 +421,12 @@ export default function MatchResultsPage({
               </button>
             </div>
             <div className="card-body">
+              {!isBlocked && isScheduled ? (
+                <Alert
+                  type="info"
+                  message="Inicia el partido para poder registrar anotaciones."
+                />
+              ) : null}
               <ScoringEventsTable
                 events={events}
                 playersById={playersById}
@@ -402,7 +434,7 @@ export default function MatchResultsPage({
                 usersById={usersById}
                 usersLoaded={usersLoaded}
                 isLoading={loadingMatchData}
-                isBlocked={isBlocked}
+                isBlocked={areEventsBlocked}
                 errorMessage={error || undefined}
                 onEdit={(event) => {
                   setEventToEdit(event);
