@@ -16,7 +16,7 @@ export interface ScoringEventFormModalProps {
   eventToEdit: ScoringEvent | null;
   homeTeam: Team | null;
   awayTeam: Team | null;
-  allPlayers: Player[];
+  matchScheduledAt?: string | null;
   usersById: Map<number, User>;
   usersLoaded: boolean;
   playerContractService: IPlayerContractService;
@@ -30,7 +30,7 @@ export default function ScoringEventFormModal({
   eventToEdit,
   homeTeam,
   awayTeam,
-  allPlayers,
+  matchScheduledAt,
   usersById,
   usersLoaded,
   playerContractService,
@@ -54,7 +54,6 @@ export default function ScoringEventFormModal({
 
   const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
   const [loadingTeamPlayers, setLoadingTeamPlayers] = useState<boolean>(false);
-  const [showAllPlayers, setShowAllPlayers] = useState<boolean>(false);
 
   const [teamError, setTeamError] = useState<string | null>(null);
   const [playerError, setPlayerError] = useState<string | null>(null);
@@ -75,7 +74,6 @@ export default function ScoringEventFormModal({
         setMinute("");
         setType("GOL");
       }
-      setShowAllPlayers(false);
       setTeamError(null);
       setPlayerError(null);
       setMinuteError(null);
@@ -87,10 +85,13 @@ export default function ScoringEventFormModal({
   useEffect(() => {
     if (!visible || !teamId) {
       setTeamPlayers([]);
+      setLoadingTeamPlayers(false);
       return;
     }
 
     let active = true;
+    const matchDate = matchScheduledAt ? matchScheduledAt.slice(0, 10) : null;
+
     setLoadingTeamPlayers(true);
     playerContractService
       .getTeamPlayers(Number(teamId))
@@ -98,7 +99,12 @@ export default function ScoringEventFormModal({
         if (!active) return;
         const uniqueByPlayer = new Map<number, Player>();
         contracts.forEach((c) => {
-          if (c.player) {
+          const isValidContract = matchDate
+            ? c.startDate.slice(0, 10) <= matchDate &&
+              (!c.endDate || c.endDate.slice(0, 10) >= matchDate)
+            : c.current === true;
+
+          if (isValidContract && c.player) {
             uniqueByPlayer.set(c.player.id, c.player);
           }
         });
@@ -114,28 +120,11 @@ export default function ScoringEventFormModal({
     return () => {
       active = false;
     };
-  }, [visible, teamId, playerContractService]);
-
-  const selectablePlayers = useMemo(() => {
-    const base = showAllPlayers || teamPlayers.length === 0
-      ? allPlayers.filter((p) => p.active || String(p.id) === playerId)
-      : teamPlayers;
-
-    if (
-      eventToEdit &&
-      !base.some((p) => p.id === eventToEdit.playerId)
-    ) {
-      const existing = allPlayers.find((p) => p.id === eventToEdit.playerId);
-      if (existing) {
-        return [existing, ...base];
-      }
-    }
-    return base;
-  }, [showAllPlayers, teamPlayers, allPlayers, playerId, eventToEdit]);
+  }, [visible, teamId, matchScheduledAt, playerContractService]);
 
   const selectedPlayer = useMemo(
-    () => selectablePlayers.find((p) => String(p.id) === playerId) ?? null,
-    [selectablePlayers, playerId],
+    () => teamPlayers.find((p) => String(p.id) === playerId) ?? null,
+    [teamPlayers, playerId],
   );
 
   const getPlayerLabel = (player: Player): string => {
@@ -252,42 +241,33 @@ export default function ScoringEventFormModal({
         </div>
 
         <div className="mb-3">
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <label htmlFor="scoring-player-select" className="form-label mb-0">
-              Jugador <span className="text-danger">*</span>
-            </label>
-            <div className="form-check form-switch mb-0">
-              <input
-                id="scoring-show-all-players"
-                className="form-check-input"
-                type="checkbox"
-                checked={showAllPlayers}
-                onChange={(e) => setShowAllPlayers(e.target.checked)}
-                disabled={submitting}
-              />
-              <label
-                htmlFor="scoring-show-all-players"
-                className="form-check-label small text-body-secondary"
-              >
-                Mostrar todos los activos
-              </label>
-            </div>
-          </div>
+          <label htmlFor="scoring-player-select" className="form-label">
+            Jugador <span className="text-danger">*</span>
+          </label>
 
           <select
             id="scoring-player-select"
             className={`form-select ${playerError ? "is-invalid" : ""}`}
             value={playerId}
             onChange={(e) => setPlayerId(e.target.value)}
-            disabled={submitting || loadingTeamPlayers || !teamId}
+            disabled={
+              submitting ||
+              loadingTeamPlayers ||
+              !teamId ||
+              teamPlayers.length === 0
+            }
             required
           >
             <option value="">
-              {loadingTeamPlayers
+              {!teamId
+                ? "Primero selecciona un equipo..."
+                : loadingTeamPlayers
                 ? "Cargando jugadores del equipo..."
+                : teamPlayers.length === 0
+                ? "Sin jugadores con contrato vigente"
                 : "Selecciona un jugador..."}
             </option>
-            {selectablePlayers.map((player) => (
+            {teamPlayers.map((player) => (
               <option key={player.id} value={player.id}>
                 {getPlayerLabel(player)}
               </option>
@@ -301,9 +281,14 @@ export default function ScoringEventFormModal({
               Documento: <strong>{selectedPlayer.document}</strong> • Posición:{" "}
               <strong>{selectedPlayer.position || "Sin definir"}</strong>
             </div>
-          ) : teamId && !loadingTeamPlayers && teamPlayers.length === 0 ? (
-            <div className="form-text">
-              Este equipo no tiene contratos registrados; se muestran los jugadores activos disponibles.
+          ) : null}
+
+          {teamId && !loadingTeamPlayers && teamPlayers.length === 0 ? (
+            <div className="mt-2">
+              <Alert
+                type="warning"
+                message="Este equipo no tiene jugadores con contrato vigente para la fecha de este partido."
+              />
             </div>
           ) : null}
         </div>
@@ -362,7 +347,12 @@ export default function ScoringEventFormModal({
           <button
             type="submit"
             className="btn btn-sports-primary"
-            disabled={submitting}
+            disabled={
+              submitting ||
+              loadingTeamPlayers ||
+              !teamId ||
+              teamPlayers.length === 0
+            }
           >
             {submitting
               ? "Guardando..."

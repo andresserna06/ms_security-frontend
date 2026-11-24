@@ -421,7 +421,7 @@ export default function MatchResultsPage({
         eventToEdit={eventToEdit}
         homeTeam={homeTeam}
         awayTeam={awayTeam}
-        allPlayers={players}
+        matchScheduledAt={selectedMatch?.scheduledAt}
         usersById={usersById}
         usersLoaded={usersLoaded}
         playerContractService={playerContractService}
