@@ -64,12 +64,19 @@ export default function PlayersPage({
     return new Set(allPlayers.map((p) => p.userId));
   }, [allPlayers]);
 
+  const [usersLoadError, setUsersLoadError] = useState<string | null>(null);
+
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
-    const result = await userService.getAll();
+    setUsersLoadError(null);
+    const result = await userService.getUsersForSelector();
     if (result) {
       setUsers(result);
       setUsersLoaded(true);
+    } else {
+      setUsers([]);
+      setUsersLoaded(false);
+      setUsersLoadError("No fue posible cargar la lista de usuarios. Verifica tus permisos o intenta nuevamente.");
     }
     setLoadingUsers(false);
   }, [userService]);
@@ -441,6 +448,7 @@ export default function PlayersPage({
         users={users}
         assignedUserIds={assignedUserIds}
         loadingUsers={loadingUsers}
+        usersLoadError={usersLoadError}
         submitting={submittingForm}
         onClose={() => {
           setFormModalVisible(false);

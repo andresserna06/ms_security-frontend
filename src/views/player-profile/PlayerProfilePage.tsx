@@ -72,7 +72,7 @@ export default function PlayerProfilePage({
   useEffect(() => {
     let active = true;
     userService
-      .getAll()
+      .getUsersForSelector()
       .then((result) => {
         if (active && result) {
           setUsers(result);
@@ -80,7 +80,7 @@ export default function PlayerProfilePage({
         }
       })
       .catch(() => {
-        // Usuarios sin permiso GET /api/users siguen pudiendo consultar perfiles deportivos
+        // Sin acceso al selector de usuarios, se mantiene fallback por ID
       });
     return () => {
       active = false;

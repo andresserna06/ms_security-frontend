@@ -100,7 +100,7 @@ export default function MatchResultsPage({
         matchResultService.getAllMatches(),
         teamService.getAll(),
         playerService.getAll({ all: true }),
-        userService.getAll(),
+        userService.getUsersForSelector(),
       ]);
       setMatches(allMatches);
       setTeams(allTeams);

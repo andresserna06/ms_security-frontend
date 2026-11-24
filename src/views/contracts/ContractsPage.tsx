@@ -115,7 +115,7 @@ export default function ContractsPage({
       const [allTeams, allPlayers, allUsers] = await Promise.all([
         teamService.getAll(),
         playerService.getAll({ all: true }),
-        userService.getAll(),
+        userService.getUsersForSelector(),
       ]);
       setTeams(allTeams);
       setPlayers(allPlayers);

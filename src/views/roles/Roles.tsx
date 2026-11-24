@@ -146,7 +146,7 @@ export default function Roles({ roleService, permissionService }: RolesProps) {
     } else if (mode === 'users') {
       const [usersCatalog, assignments] = await Promise.all([
         canViewUsersCatalog
-          ? userRoleService.getAllUsers()
+          ? userRoleService.getUsersForSelector()
           : Promise.resolve(null),
         canViewRoleUsers
           ? userRoleService.getByRole(role.id)

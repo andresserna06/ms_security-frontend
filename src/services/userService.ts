@@ -24,6 +24,22 @@ export class UserService implements IUserService {
     }
   }
 
+  async getUsersForSelector(): Promise<User[] | null> {
+    try {
+      const response = await authFetch(`${BASE_URL}${this.endpoint}/selector`);
+      if (!response.ok) throw new Error("Error fetching users selector");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        registerUsers(data);
+        return data.map((u: any) => new User(u));
+      }
+      return null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
   async getById(id: number): Promise<User | null> {
     try {
       const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`);

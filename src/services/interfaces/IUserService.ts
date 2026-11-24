@@ -2,6 +2,7 @@ import { User } from "../../models/User";
 
 export interface IUserService {
   getAll(): Promise<User[] | null>;
+  getUsersForSelector(): Promise<User[] | null>;
   getById(id: number): Promise<User | null>;
   getDetailWithProfile(id: number): Promise<User | null>;
   getDetailWithRoles(id: number): Promise<User | null>;

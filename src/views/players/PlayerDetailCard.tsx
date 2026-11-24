@@ -165,7 +165,7 @@ export default function PlayerDetailCard({
             </span>
           </li>
           <li className="list-group-item d-flex justify-content-between px-0 py-2">
-            <span className="text-body-secondary small">ID Usuario (Seguridad)</span>
+            <span className="text-body-secondary small">ID Usuario</span>
             <span className="fw-semibold small">#{playerDetail.userId}</span>
           </li>
           <li className="list-group-item d-flex justify-content-between px-0 py-2">

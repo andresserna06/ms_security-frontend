@@ -12,6 +12,7 @@ export interface PlayerFormModalProps {
   users: User[];
   assignedUserIds: Set<number>;
   loadingUsers: boolean;
+  usersLoadError?: string | null;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (payload: PlayerPayload) => Promise<void>;
@@ -23,6 +24,7 @@ export default function PlayerFormModal({
   users,
   assignedUserIds,
   loadingUsers,
+  usersLoadError = null,
   submitting,
   onClose,
   onSubmit,
@@ -42,10 +44,11 @@ export default function PlayerFormModal({
 
   const availableUsers = useMemo(() => {
     return users.filter((u) => {
-      if (isEditMode && playerToEdit && u.id === playerToEdit.userId) {
-        return true;
-      }
-      return !assignedUserIds.has(u.id);
+      const isCurrentUser = isEditMode && playerToEdit && u.id === playerToEdit.userId;
+      if (isCurrentUser) return true;
+      if (assignedUserIds.has(u.id)) return false;
+      if (!isEditMode && u.active === false) return false;
+      return true;
     });
   }, [users, assignedUserIds, isEditMode, playerToEdit]);
 
@@ -168,16 +171,18 @@ export default function PlayerFormModal({
           />
         ) : null}
 
-        {!isEditMode && !loadingUsers && availableUsers.length === 0 ? (
+        {usersLoadError ? (
+          <Alert type="danger" message={usersLoadError} />
+        ) : !isEditMode && !loadingUsers && availableUsers.length === 0 ? (
           <Alert
             type="warning"
-            message="Todos los usuarios registrados en seguridad ya tienen una ficha de jugador asignada."
+            message="No hay usuarios disponibles para registrar como jugador. Verifica que existan usuarios activos sin ficha asignada."
           />
         ) : null}
 
         <div className="mb-3">
           <label htmlFor="player-userId" className="form-label">
-            Usuario (ms_seguridad) <span className="text-danger">*</span>
+            Usuario <span className="text-danger">*</span>
           </label>
           <select
             id="player-userId"
@@ -185,19 +190,16 @@ export default function PlayerFormModal({
             className={`form-select ${userIdError ? "is-invalid" : ""}`}
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            disabled={loadingUsers || submitting}
+            disabled={loadingUsers || submitting || Boolean(usersLoadError)}
             required
           >
             <option value="">
-              {loadingUsers
-                ? "Cargando usuarios..."
-                : "Selecciona un usuario..."}
+              {loadingUsers ? "Cargando usuarios..." : "Selecciona un usuario..."}
             </option>
             {availableUsers.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name || `Usuario #${u.id}`} ({u.email || "sin correo"}) — ID #
-                {u.id}
-                {u.active === false ? " [Inactivo]" : ""}
+                {u.name || `Usuario #${u.id}`} ({u.email || "sin correo"})
+                {u.active === false ? " (inactivo)" : ""}
               </option>
             ))}
           </select>
@@ -205,7 +207,7 @@ export default function PlayerFormModal({
             <div className="invalid-feedback">{userIdError}</div>
           ) : (
             <div className="form-text">
-              Solo se muestran usuarios que aún no están registrados como jugadores.
+              Solo se muestran usuarios activos que aún no están registrados como jugadores.
             </div>
           )}
         </div>

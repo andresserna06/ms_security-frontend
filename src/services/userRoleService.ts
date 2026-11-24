@@ -25,6 +25,16 @@ export class UserRoleService implements IUserRoleService {
     }
   }
 
+  async getUsersForSelector(): Promise<User[] | null> {
+    try {
+      const data = await apiClient.get("/users/selector");
+      return Array.isArray(data) ? data.map((user: any) => new User(user)) : null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
   async getByRole(roleId: number): Promise<UserRole[] | null> {
     try {
       const data = await apiClient.get(`/user-roles/roles/${roleId}`);

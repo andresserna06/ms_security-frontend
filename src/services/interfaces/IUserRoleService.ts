@@ -5,6 +5,7 @@ import { UserRole } from "../../models/UserRole";
 export interface IUserRoleService {
   getAllRoles(): Promise<Role[] | null>;
   getAllUsers(): Promise<User[] | null>;
+  getUsersForSelector(): Promise<User[] | null>;
   getByUser(userId: number): Promise<UserRole[] | null>;
   getByRole(roleId: number): Promise<UserRole[] | null>;
   assignRole(userId: number, roleId: number): Promise<UserRole | null>;

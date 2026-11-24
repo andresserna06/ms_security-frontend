@@ -108,7 +108,7 @@ export default function PlayerSkillsPage({
       const [allPlayers, allSkills, allUsers] = await Promise.all([
         playerService.getAll({ all: true }),
         skillService.getAll(),
-        userService.getAll(),
+        userService.getUsersForSelector(),
       ]);
       setPlayers(allPlayers);
       setSkills(allSkills);
