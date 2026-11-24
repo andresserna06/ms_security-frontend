@@ -13,6 +13,10 @@ import {
   cilLayers,
   cilMediaPlay,
   cilCheckCircle,
+  cilShieldAlt,
+  cilBasketball,
+  cilCalendar,
+  cilSitemap,
 } from '@coreui/icons'
 import authService from './services/authService'
 import { canAccessRoute } from './utils/routeAccess'
@@ -59,6 +63,34 @@ const _nav = [
   {
     component: CNavTitle,
     name: 'Gestión Deportiva',
+  },
+  {
+    component: CNavItem,
+    name: 'Equipos',
+    to: '/teams',
+    icon: <CIcon icon={cilShieldAlt} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/teams' },
+  },
+  {
+    component: CNavItem,
+    name: 'Equipos y Deportes',
+    to: '/team-sports',
+    icon: <CIcon icon={cilBasketball} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/teams' },
+  },
+  {
+    component: CNavItem,
+    name: 'Torneos',
+    to: '/tournaments',
+    icon: <CIcon icon={cilCalendar} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/tournaments' },
+  },
+  {
+    component: CNavItem,
+    name: 'Desarrollo del Torneo',
+    to: '/tournament-overview',
+    icon: <CIcon icon={cilSitemap} customClassName="nav-icon" />,
+    permission: { method: 'GET', url: '/tournaments' },
   },
   {
     component: CNavItem,
