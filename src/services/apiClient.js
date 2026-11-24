@@ -1,7 +1,12 @@
+import {
+  captureSecurityEntitiesFromResponse,
+  formatEntityMessage,
+} from '../utils/entityNameRegistry'
+
 const BACKEND_URL = (import.meta.env.VITE_URL_BACKEND || 'http://localhost:8181').replace(/\/+$/, '')
 const API_BASE_URL = (import.meta.env.VITE_API_URL || `${BACKEND_URL}/api`).replace(/\/+$/, '')
 
-const parseResponse = async (response) => {
+const parseResponse = async (response, endpoint = '') => {
   if (response.status === 204) {
     return null
   }
@@ -38,11 +43,15 @@ const parseResponse = async (response) => {
       errorMessage = data
     }
 
-    const error = new Error(errorMessage)
+    const error = new Error(formatEntityMessage(errorMessage))
     error.status = response.status
     error.errorCase = data?.errorCase || null
     error.fieldErrors = fieldErrors
     throw error
+  }
+
+  if (endpoint) {
+    captureSecurityEntitiesFromResponse(endpoint, data)
   }
 
   return data
@@ -70,7 +79,7 @@ export const apiClient = {
         ...getAuthHeaders(),
       },
     })
-    return parseResponse(response)
+    return parseResponse(response, endpoint)
   },
 
   post: async (endpoint, body) => {
@@ -83,7 +92,7 @@ export const apiClient = {
       },
       body: JSON.stringify(body),
     })
-    return parseResponse(response)
+    return parseResponse(response, endpoint)
   },
 
   put: async (endpoint, body) => {
@@ -96,7 +105,7 @@ export const apiClient = {
       },
       body: JSON.stringify(body),
     })
-    return parseResponse(response)
+    return parseResponse(response, endpoint)
   },
 
   patch: async (endpoint, body = null) => {
@@ -112,7 +121,7 @@ export const apiClient = {
       options.body = JSON.stringify(body)
     }
     const response = await fetch(`${API_BASE_URL}${endpoint}`, options)
-    return parseResponse(response)
+    return parseResponse(response, endpoint)
   },
 
   delete: async (endpoint) => {
@@ -123,7 +132,7 @@ export const apiClient = {
         ...getAuthHeaders(),
       },
     })
-    return parseResponse(response)
+    return parseResponse(response, endpoint)
   },
 }
 

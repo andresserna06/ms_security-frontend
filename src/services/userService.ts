@@ -1,6 +1,7 @@
 import { authFetch } from "./authFetch";
 import { User } from "../models/User";
 import { IUserService } from "./interfaces/IUserService";
+import { registerUsers } from "../utils/entityNameRegistry";
 
 const BASE_URL = import.meta.env.VITE_URL_BACKEND || "http://localhost:8181";
 
@@ -12,7 +13,11 @@ export class UserService implements IUserService {
       const response = await authFetch(`${BASE_URL}${this.endpoint}`);
       if (!response.ok) throw new Error("Error fetching users");
       const data = await response.json();
-      return Array.isArray(data) ? data.map((u: any) => new User(u)) : null;
+      if (Array.isArray(data)) {
+        registerUsers(data);
+        return data.map((u: any) => new User(u));
+      }
+      return null;
     } catch (error) {
       console.error(error);
       return null;
@@ -24,6 +29,7 @@ export class UserService implements IUserService {
       const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}`);
       if (!response.ok) throw new Error("Error fetching user");
       const data = await response.json();
+      registerUsers(data);
       return new User(data);
     } catch (error) {
       console.error(error);
@@ -36,6 +42,7 @@ export class UserService implements IUserService {
       const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/detail`);
       if (!response.ok) throw new Error("Error fetching user detail with profile");
       const data = await response.json();
+      registerUsers(data);
       return new User(data);
     } catch (error) {
       console.error(error);
@@ -48,6 +55,7 @@ export class UserService implements IUserService {
       const response = await authFetch(`${BASE_URL}${this.endpoint}/${id}/detail-with-roles`);
       if (!response.ok) throw new Error("Error fetching user detail with roles");
       const data = await response.json();
+      registerUsers(data);
       return new User(data);
     } catch (error) {
       console.error(error);

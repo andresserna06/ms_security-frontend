@@ -192,16 +192,21 @@ export default function PlayersPage({
     setSuccess(null);
   };
 
+  const getPlayerLabel = (player: Pick<Player, "userId" | "document">): string => {
+    const userName = usersById.get(Number(player.userId))?.name?.trim();
+    return userName || player.document;
+  };
+
   const handleFormSubmit = async (payload: PlayerPayload) => {
     setSubmittingForm(true);
     try {
       if (playerToEdit) {
         const updated = await playerService.update(playerToEdit.id, payload);
-        setSuccess(`Jugador "${updated.document}" actualizado correctamente.`);
+        setSuccess(`Jugador "${getPlayerLabel(updated)}" actualizado correctamente.`);
         setSelectedPlayerId(updated.id);
       } else {
         const created = await playerService.create(payload);
-        setSuccess(`Jugador "${created.document}" registrado correctamente.`);
+        setSuccess(`Jugador "${getPlayerLabel(created)}" registrado correctamente.`);
         setSelectedPlayerId(created.id);
       }
       setFormModalVisible(false);
@@ -221,10 +226,10 @@ export default function PlayersPage({
     try {
       if (player.active) {
         await playerService.deactivate(player.id);
-        setSuccess(`Jugador "${player.document}" desactivado correctamente.`);
+        setSuccess(`Jugador "${getPlayerLabel(player)}" desactivado correctamente.`);
       } else {
         await playerService.activate(player.id);
-        setSuccess(`Jugador "${player.document}" activado correctamente.`);
+        setSuccess(`Jugador "${getPlayerLabel(player)}" activado correctamente.`);
       }
       await Promise.all([fetchPlayers(false), fetchAllPlayersIndex()]);
       if (selectedPlayerId === player.id) {
@@ -242,7 +247,7 @@ export default function PlayersPage({
     setSuccess(null);
     try {
       await playerService.remove(playerToDelete.id);
-      setSuccess(`Jugador "${playerToDelete.document}" eliminado correctamente.`);
+      setSuccess(`Jugador "${getPlayerLabel(playerToDelete)}" eliminado correctamente.`);
       const deletedId = playerToDelete.id;
       setPlayerToDelete(null);
       if (selectedPlayerId === deletedId) {

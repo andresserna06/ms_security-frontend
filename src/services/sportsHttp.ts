@@ -1,4 +1,8 @@
 import { authFetch } from "./authFetch";
+import {
+  captureSportsEntitiesFromResponse,
+  formatEntityMessage,
+} from "../utils/entityNameRegistry";
 
 export const SPORTS_BASE_URL = (
   import.meta.env.VITE_URL_SPORTS || "http://localhost:3001"
@@ -108,8 +112,21 @@ export async function sportsRequest<T>(
       message = data;
     }
 
-    throw new SportsApiError(message, response.status, errorCase, fieldErrors);
+    const formattedMessage = formatEntityMessage(message);
+    const formattedFieldErrors = fieldErrors
+      ? Object.fromEntries(
+          Object.entries(fieldErrors).map(([k, v]) => [k, formatEntityMessage(v)]),
+        )
+      : undefined;
+
+    throw new SportsApiError(
+      formattedMessage,
+      response.status,
+      errorCase,
+      formattedFieldErrors,
+    );
   }
 
+  captureSportsEntitiesFromResponse(path, data);
   return data as T;
 }
