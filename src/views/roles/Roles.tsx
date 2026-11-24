@@ -15,6 +15,7 @@ import Alert from '../../components/common/Alert'
 import Loader from '../../components/common/Loader'
 import RoleForm from './RoleForm'
 import authService from '../../services/authService'
+import { isFanRoleName, registerFan } from '../../services/fanService'
 
 interface RolesProps {
   roleService: IRoleService
@@ -361,8 +362,9 @@ export default function Roles({ roleService, permissionService }: RolesProps) {
     setManagementError(null)
     setManagementSuccess(null)
 
+    const userId = Number(selectedUserIdForRole)
     const assigned = await userRoleService.assignRole(
-      Number(selectedUserIdForRole),
+      userId,
       managementRole.id,
     )
 
@@ -374,9 +376,24 @@ export default function Roles({ roleService, permissionService }: RolesProps) {
       return
     }
 
+    let fanSyncError: string | null = null
+    if (isFanRoleName(managementRole.name)) {
+      try {
+        await registerFan(userId)
+      } catch (err: any) {
+        fanSyncError =
+          err?.message ||
+          'El usuario fue asignado al rol, pero no se pudo registrar como aficionado en ms_sports.'
+      }
+    }
+
     await loadManagementData('users', managementRole)
 
-    setManagementSuccess('Usuario asignado al rol correctamente.')
+    if (fanSyncError) {
+      setManagementError(fanSyncError)
+    } else {
+      setManagementSuccess('Usuario asignado al rol correctamente.')
+    }
     setManagementSubmitting(false)
   }
 

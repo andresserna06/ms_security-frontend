@@ -1,6 +1,11 @@
 import { SportsApiError, sportsRequest } from "./sportsHttp";
 
-const FAN_ROLE_NAMES = new Set(["AFICIONADO", "FAN"]);
+const FAN_ROLE_NAMES = new Set([
+  "AFICIONADO",
+  "FAN",
+  "ROLE_AFICIONADO",
+  "ROLE_FAN",
+]);
 
 export function isFanRoleName(roleName?: string | null): boolean {
   if (!roleName) return false;

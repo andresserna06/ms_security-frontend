@@ -78,7 +78,7 @@ export default function UserRolesManager({
     }
 
     const roleId = Number(selectedRoleId);
-    const selectedRole = allRoles.find((role) => role.id === roleId);
+    const selectedRole = allRoles.find((role) => Number(role.id) === roleId);
 
     setSubmitting(true);
     setErrorMessage("");
